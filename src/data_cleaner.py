@@ -4,6 +4,7 @@ import re
 import sqlite3
 from datetime import datetime
 import logging
+import unicodedata
 
 # Configuration du logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -39,9 +40,15 @@ class DataCleaner:
             df['Produit'] = df['Produit'].str.lower()
             df['Produit'] = df['Produit'].str.strip()
             
+            # Supprimer les quantités (ex: 1KG, 500ML, 4X125G)
+            df['Produit'] = df['Produit'].apply(lambda x: re.sub(r'\b\d+[Xx]?\d*[a-z]+\b', '', x))
+            
             # Supprimer les caractères spéciaux excessifs
             df['Produit'] = df['Produit'].apply(lambda x: re.sub(r'[^\w\s\-\.]', ' ', x))
             df['Produit'] = df['Produit'].apply(lambda x: re.sub(r'\s+', ' ', x))
+            
+            # Garder uniquement les caractères latins
+            df['Produit'] = df['Produit'].apply(self.garder_caracteres_latin)
             
             # Supprimer les doublons
             df = df.drop_duplicates(subset=['Produit'])
@@ -49,6 +56,24 @@ class DataCleaner:
             logger.info(f"✅ Produits nettoyés: {initial_count} → {len(df)}")
         
         return df
+    
+    def garder_caracteres_latin(self, texte):
+        """
+        Garde uniquement les caractères latins (et tout le reste sauf les lettres non latines)
+        """
+        if pd.isnull(texte):  # Si la valeur est NaN
+            return texte
+        texte = str(texte)
+        resultat = ''
+        for char in texte:
+            if char.isalpha():
+                nom = unicodedata.name(char, '')
+                if 'LATIN' in nom:
+                    resultat += char  # Lettre latine OK
+                # Sinon, on supprime
+            else:
+                resultat += char  # On garde chiffres, ponctuation, espaces, symboles
+        return resultat
     
     def normalize_categories(self, df):
         """
@@ -84,6 +109,9 @@ class DataCleaner:
                 'entretien': 'Entretien / Ménage',
                 'menage': 'Entretien / Ménage'
             }
+            
+            # Supprimer le préfixe "en:" (comme dans nettoyage.py)
+            df['Categories_OFF'] = df['Categories_OFF'].str.removeprefix('en:')
             
             # Appliquer le mapping
             df['Categories_OFF'] = df['Categories_OFF'].str.lower()
@@ -194,7 +222,7 @@ class DataCleaner:
             
             # Sauvegarder
             aggregated_df.to_csv(output_file, index=False, sep=';')
-            logger.info(f"✅ Données agrégées sauvegardées: {output_file} ({len(aggregated_df)} lignes)")
+            logger.info(f" Données agrégées sauvegardées: {output_file} ({len(aggregated_df)} lignes)")
             
             return aggregated_df
         
@@ -204,7 +232,7 @@ class DataCleaner:
         """
         Applique tous les nettoyages sur un DataFrame
         """
-        logger.info("🧹 Application du pipeline de nettoyage complet...")
+        logger.info("Application du pipeline de nettoyage complet...")
         
         initial_count = len(df)
         
