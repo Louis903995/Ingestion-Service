@@ -53,7 +53,7 @@ class DataCleaner:
             # Supprimer les doublons
             df = df.drop_duplicates(subset=['Produit'])
             
-            logger.info(f"✅ Produits nettoyés: {initial_count} → {len(df)}")
+            logger.info(f"Produits nettoyés: {initial_count} → {len(df)}")
         
         return df
     
@@ -151,7 +151,7 @@ class DataCleaner:
         """
         Valide et corrige les dates
         """
-        logger.info("📅 Validation des dates...")
+        logger.info("Validation des dates...")
         
         date_columns = ['date_achat', 'date_enregistrement', 'collected_at']
         
@@ -166,33 +166,7 @@ class DataCleaner:
                        ((df[col] <= current_date) & 
                         (df[col] >= current_date - pd.DateOffset(years=10)))]
                 
-                logger.info(f"✅ Dates validées pour {col}")
-        
-        return df
-    
-    def remove_corrupted_entries(self, df):
-        """
-        Supprime les entrées corrompues
-        """
-        logger.info("🚫 Suppression des entrées corrompues...")
-        
-        initial_count = len(df)
-        
-        # Supprimer les lignes avec trop de valeurs manquantes (>50%)
-        threshold = len(df.columns) * 0.5
-        df = df.dropna(thresh=threshold)
-        
-        # Supprimer les lignes avec des valeurs aberrantes
-        if 'Prix' in df.columns:
-            # Prix négatifs ou trop élevés
-            df = df[(df['Prix'].isna()) | ((df['Prix'] >= 0) & (df['Prix'] <= 10000))]
-        
-        if 'Produit' in df.columns:
-            # Produits avec des noms trop courts ou trop longs
-            df = df[df['Produit'].str.len() >= 2]
-            df = df[df['Produit'].str.len() <= 200]
-        
-        logger.info(f"✅ Entrées corrompues supprimées: {initial_count} → {len(df)}")
+                logger.info(f"Dates validées pour {col}")
         
         return df
     
@@ -287,7 +261,7 @@ if __name__ == "__main__":
     # Charger des données d'exemple
     try:
         df = pd.read_csv("data/tickets_categorie_final.csv", sep=';')
-        print(f"📂 Données chargées: {len(df)} lignes")
+        print(f"Données chargées: {len(df)} lignes")
         
         # Nettoyer
         df_clean = cleaner.clean_all_data(df)
@@ -296,4 +270,4 @@ if __name__ == "__main__":
         cleaner.generate_cleaning_report(df, df_clean)
         
     except FileNotFoundError:
-        print("❌ Fichier de données non trouvé. Créez d'abord des données d'exemple.") 
+        print("Fichier de données non trouvé.") 
