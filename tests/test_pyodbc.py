@@ -110,7 +110,7 @@ for table in tables:
 
 
 """
-# Supprimer toutes les données des tables dans l'ordre inverse des dépendances
+# Supprimer toutes les données des tables 
 cursor.execute("DELETE FROM supermarche")
 cursor.execute("DELETE FROM categorie")
 cursor.execute("DELETE FROM ticket")
