@@ -18,6 +18,14 @@ conn_str = f"Driver={driver};Server=tcp:{server},1433;Database={database};Uid={u
 conn = pyodbc.connect(conn_str)
 cursor = conn.cursor()
 
+
+"""
+# Supprimer les tables si elles existent déjà (ordre important : ticket d'abord car dépend de client)
+cursor.execute("IF OBJECT_ID('ticket', 'U') IS NOT NULL DROP TABLE ticket;")
+cursor.execute("IF OBJECT_ID('client', 'U') IS NOT NULL DROP TABLE client;")
+conn.commit()
+"""
+
 # 1. Créer la table client 
 cursor.execute(
 """
@@ -27,7 +35,7 @@ CREATE TABLE client (
     nom NVARCHAR(100),
     prenom NVARCHAR(100),
     budget DECIMAL(10,2),
-    date_enregistrement DATETIME
+    date_enregistrement DATETIME DEFAULT GETDATE()
 )
 """
 )
@@ -40,14 +48,15 @@ cursor.execute(
 IF OBJECT_ID('ticket', 'U') IS NULL
 CREATE TABLE ticket (
     id_ticket INT PRIMARY KEY IDENTITY(1,1),
-    client_id INT,
+    client_id INT NULL,
     libelle NVARCHAR(255),
-    FOREIGN KEY (client_id) REFERENCES client(client_id)
+    FOREIGN KEY (client_id) REFERENCES client(client_id) ON DELETE SET NULL
 )
 """
 )
 conn.commit()
 print("Table 'ticket' créée ou existe déjà.")
+
 
 # 3. Créer la table categorie
 cursor.execute(
@@ -109,7 +118,7 @@ for table in tables:
     print(f"- {table[0]}")
 
 
-"""
+
 # Supprimer toutes les données des tables 
 cursor.execute("DELETE FROM supermarche")
 cursor.execute("DELETE FROM categorie")
@@ -124,7 +133,7 @@ cursor.execute("DBCC CHECKIDENT ('categorie', RESEED, 0)")
 cursor.execute("DBCC CHECKIDENT ('ticket', RESEED, 0)")
 cursor.execute("DBCC CHECKIDENT ('client', RESEED, 0)")
 conn.commit()
-"""
+
 
 
 ### Exemple de data

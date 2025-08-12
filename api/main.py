@@ -1,18 +1,31 @@
 from fastapi import FastAPI, HTTPException, Depends
-from sqlmodel import SQLModel, Field, create_engine, Session, select
+from sqlmodel import SQLModel, Field, create_engine, Session, select, delete
 from typing import List, Optional
 import datetime
 
 app = FastAPI()
 
-# 1. Définir les modèles avec SQLModel 
+# 1. Définir les Classes 
 
+# Modèle Client principal (table SQL)
 class Client(SQLModel, table=True):
     client_id: Optional[int] = Field(default=None, primary_key=True)
     nom: str
     prenom: str
     budget: float
-    date_enregistrement: datetime.datetime
+    date_enregistrement: datetime.datetime = Field(default_factory=datetime.datetime.utcnow)
+
+# Modèle pour mise à jour 
+class ClientUpdate(SQLModel):
+    nom: Optional[str] = None
+    prenom: Optional[str] = None
+    budget: Optional[float] = None
+
+# Créer un client en ne specifiant que le nom, prenom et le budget 
+class ClientCreate(SQLModel):
+    nom: str
+    prenom: str
+    budget: float
 
 class Ticket(SQLModel, table=True):
     id_ticket: Optional[int] = Field(default=None, primary_key=True)
@@ -33,7 +46,7 @@ class Supermarche(SQLModel, table=True):
     prix_total: float
 
 
-# 2. Connexion à ta base Azure SQL
+# 2. Connexion à la base Azure SQL
 
 server = "simplon-certif.database.windows.net"
 database = "simplon-certif"
@@ -51,36 +64,35 @@ def get_session():
     with Session(engine) as session:
         yield session
 
-# 5. Routes FastAPI
+# 4. Routes FastAPI concernant les Clients
 
-@app.get("/clients", response_model=List[Client]) # lire tous les clients 
+@app.get("/clients", response_model=List[Client])
 def read_clients(session: Session = Depends(get_session)):
-    clients = session.exec(select(Client)).all()
-    return clients
+    return session.exec(select(Client)).all()
 
-@app.get("/clients/{client_id}", response_model=Client) # lire un client en fonction de son id 
+@app.get("/clients/{client_id}", response_model=Client)
 def read_client(client_id: int, session: Session = Depends(get_session)):
     client = session.get(Client, client_id)
     if not client:
         raise HTTPException(status_code=404, detail="Client non trouvé")
     return client
 
-@app.post("/clients", response_model=Client) # creer un client 
-def create_client(client: Client, session: Session = Depends(get_session)):
+@app.post("/clients", response_model=Client)
+def create_client(client_create: ClientCreate, session: Session = Depends(get_session)):
+    client = Client.from_orm(client_create)
     session.add(client)
     session.commit()
     session.refresh(client)
     return client
 
-# Modifier un client (PUT)
 @app.put("/clients/{client_id}", response_model=Client)
-def update_client(client_id: int, client_update: Client, session: Session = Depends(get_session)):
+def update_client(client_id: int, client_update: ClientUpdate, session: Session = Depends(get_session)):
     db_client = session.get(Client, client_id)
     if not db_client:
         raise HTTPException(status_code=404, detail="Client non trouvé")
 
-    # On met à jour uniquement les champs modifiés
-    for key, value in client_update.dict(exclude_unset=True).items():
+    update_data = client_update.dict(exclude_unset=True)
+    for key, value in update_data.items():
         setattr(db_client, key, value)
 
     session.add(db_client)
@@ -88,16 +100,18 @@ def update_client(client_id: int, client_update: Client, session: Session = Depe
     session.refresh(db_client)
     return db_client
 
-# Supprimer un client (DELETE)
-@app.delete("/clients/{client_id}")
+@app.delete("/clients/{client_id}") # on peut supprimer un client sans que cela n'ai d'effets sur les tickets enregistrés 
 def delete_client(client_id: int, session: Session = Depends(get_session)):
-    db_client = session.get(Client, client_id)
-    if not db_client:
+    client = session.get(Client, client_id)
+    if not client:
         raise HTTPException(status_code=404, detail="Client non trouvé")
 
-    session.delete(db_client)
+    session.delete(client)
     session.commit()
     return {"message": "Client supprimé avec succès"}
+
+
+# 5. Routes FastAPI concernant les tickets
 
 # Lire tous les tickets
 @app.get("/tickets", response_model=List[Ticket])
@@ -149,6 +163,7 @@ def delete_ticket(ticket_id: int, session: Session = Depends(get_session)):
 
 
 
+# 6. Routes FastAPI concernant les catégories 
 # Lire toutes les catégories
 @app.get("/categories", response_model=List[Categorie])
 def read_categories(session: Session = Depends(get_session)):
@@ -197,6 +212,8 @@ def delete_category(categorie_id: int, session: Session = Depends(get_session)):
     session.commit()
     return {"message": "Catégorie supprimée avec succès"}
 
+
+# 7. Routes FastAPI concernant les supermarchés
 
 # Lire tous les supermarchés
 @app.get("/supermarches", response_model=List[Supermarche])
