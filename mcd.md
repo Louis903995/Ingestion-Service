@@ -1,3 +1,4 @@
+```mermaid
 erDiagram
     CLIENT {
         int client_id PK
@@ -41,3 +42,4 @@ erDiagram
     SUPERMARCHE ||--o{ TICKET_ENTETE : "émet"
     TICKET_ENTETE ||--o{ TICKET_LIGNE : "contient"
     CATEGORIE ||--o{ TICKET_LIGNE : "classifie"
+```

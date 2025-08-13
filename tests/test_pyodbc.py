@@ -79,8 +79,8 @@ IF OBJECT_ID('supermarche', 'U') IS NULL
 BEGIN
     CREATE TABLE supermarche (
         supermarche_id INT PRIMARY KEY IDENTITY(1,1),
-        magasin_nom NVARCHAR(200) NOT NULL,
-        magasin_adresse NVARCHAR(300)
+        supermarche_nom NVARCHAR(200) NOT NULL,
+        supermarche_adresse NVARCHAR(300)
     )
 END
 """)
@@ -125,7 +125,6 @@ cursor.execute("""
 IF OBJECT_ID('ticket_ligne', 'U') IS NULL
 BEGIN
     CREATE TABLE ticket_ligne (
-        ticket_ligne_id INT PRIMARY KEY IDENTITY(1,1),
         ticket_id INT NOT NULL,
         libelle NVARCHAR(100) NOT NULL,
         quantite INT NOT NULL DEFAULT 1,
