@@ -54,12 +54,12 @@ def write_ticket_ligne(ticket_id: int, ticket: dict) -> int | None:
 # analyse une image de ticket et le stocke dans les différentes tables en l'attachant au user id
 # renvoie l'id du ticket, None en cas d'erreur
 def ingestion_image(user_id: int, image: bytes) -> int | None:
-    ticket_dict = ocr_to_dict(image)
-    ticket_categorise = categorise_produits(ticket_dict)
-    ticket_lu = resoud_enseigne(ticket_categorise)
-    ticket_id = write_ticket_entete(user_id, ticket_lu)
+    ticket_brut = ocr_to_dict(image)
+    ticket_categorise = categorise_produits(ticket_brut)
+    ticket_avec_enseigne = resoud_enseigne(ticket_categorise)
+    ticket_id = write_ticket_entete(user_id, ticket_avec_enseigne)
     if ticket_id:
-        lignes_ecrites = write_ticket_ligne(ticket_id, ticket_lu)
-        if lignes_ecrites == len(ticket_lu["lignes"]):
+        lignes_ecrites = write_ticket_ligne(ticket_id, ticket_avec_enseigne)
+        if lignes_ecrites == len(ticket_avec_enseigne["lignes"]):
             return ticket_id
     return None
