@@ -1,4 +1,5 @@
 ```mermaid
+%%{init: {"theme": "base"}}%%
 erDiagram
     CLIENT {
         int client_id PK
@@ -12,15 +13,15 @@ erDiagram
 
     SUPERMARCHE {
         int supermarche_id PK
-        nvarchar magasin_nom
-        nvarchar magasin_adresse
+        nvarchar supermarche_nom
+        nvarchar supermarche_adresse
     }
 
     TICKET_ENTETE {
         int ticket_id PK
         int client_id FK
-        int supermarche_id FK
         datetime date_heure_ticket
+        int supermarche_id FK
     }
 
     CATEGORIE {
@@ -29,7 +30,6 @@ erDiagram
     }
 
     TICKET_LIGNE {
-        int ticket_ligne_id PK
         int ticket_id FK
         nvarchar libelle
         int quantite
@@ -38,8 +38,10 @@ erDiagram
         decimal prix_total
     }
 
-    CLIENT ||--o{ TICKET_ENTETE : "fait"
-    SUPERMARCHE ||--o{ TICKET_ENTETE : "émet"
-    TICKET_ENTETE ||--o{ TICKET_LIGNE : "contient"
-    CATEGORIE ||--o{ TICKET_LIGNE : "classifie"
+    CLIENT ||--o{ TICKET_ENTETE : client_id ON DELETE SET NULL
+    SUPERMARCHE ||--o{ TICKET_ENTETE : supermarche_id
+    TICKET_ENTETE ||--o{ TICKET_LIGNE : ticket_id ON DELETE CASCADE
+    CATEGORIE ||--o{ TICKET_LIGNE : categorie_id
+
+
 ```
