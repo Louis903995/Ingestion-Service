@@ -5,7 +5,7 @@ description = "Default template for PDM package"
 authors = [
     {name = "Louis903995", email = "louis@moises.fr"},
 ]
-dependencies = ["pyodbc>=5.2.0"]
+dependencies = ["pyodbc>=5.2.0", "pandas>=2.3.1", "prophet>=1.1.7"]
 requires-python = ">=3.12"
 readme = "README.md"
 license = {text = "MIT"}
