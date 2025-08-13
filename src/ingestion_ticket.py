@@ -14,7 +14,7 @@ def ocr(image: bytes) -> dict:
                 "libelle_produit": "Coca cola",
                 "quantite": 1,
                 "prix_unitaire": 12,
-                "montant_total_ligne": 12.1,
+                " montant_total_ligne": 12.1,
             },
             {
                 "libelle_produit": "Perrier 50 cl",
@@ -54,7 +54,9 @@ def write_ticket_ligne(ticket_id: int, ticket: dict) -> int | None:
 # analyse une image de ticket et le stocke dans les différentes tables en l'attachant au user id
 # renvoie l'id du ticket, None en cas d'erreur
 def ingestion_image(user_id: int, image: bytes) -> int | None:
-    ticket_lu = resoud_enseigne(categorise_produits(ocr(image)))
+    ticket_ocr = ocr(image)
+    ticket_categorise = categorise_produits(ticket_ocr)
+    ticket_lu = resoud_enseigne(ticket_categorise)
     ticket_id = write_ticket_entete(user_id, ticket_lu)
     if ticket_id:
         lignes_ecrites = write_ticket_ligne(ticket_id, ticket_lu)
