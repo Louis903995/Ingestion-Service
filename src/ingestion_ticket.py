@@ -2,7 +2,7 @@ from datetime import datetime
 
 
 # transforme l'image en un json (dict) intermédiaire
-def ocr(image: bytes) -> dict:
+def ocr_to_dict(image: bytes) -> dict:
     return {
         "entete": {
             "nom_enseigne": "Carrefour Market Loos",
@@ -54,8 +54,8 @@ def write_ticket_ligne(ticket_id: int, ticket: dict) -> int | None:
 # analyse une image de ticket et le stocke dans les différentes tables en l'attachant au user id
 # renvoie l'id du ticket, None en cas d'erreur
 def ingestion_image(user_id: int, image: bytes) -> int | None:
-    ticket_ocr = ocr(image)
-    ticket_categorise = categorise_produits(ticket_ocr)
+    ticket_dict = ocr_to_dict(image)
+    ticket_categorise = categorise_produits(ticket_dict)
     ticket_lu = resoud_enseigne(ticket_categorise)
     ticket_id = write_ticket_entete(user_id, ticket_lu)
     if ticket_id:
