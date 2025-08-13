@@ -1,5 +1,11 @@
 ```mermaid
-%%{init: {"theme": "base"}}%%
+%%{init: {'theme': 'dark', 'themeVariables': { 
+  'primaryColor': '#1E1E1E', 
+  'secondaryColor': '#2D2D2D', 
+  'tertiaryColor': '#3E3E3E', 
+  'lineColor': '#FFFFFF', 
+  'textColor': '#FFFFFF' 
+}}}%%
 erDiagram
     CLIENT {
         int client_id PK
@@ -38,10 +44,8 @@ erDiagram
         decimal prix_total
     }
 
-    CLIENT ||--o{ TICKET_ENTETE : client_id ON DELETE SET NULL
-    SUPERMARCHE ||--o{ TICKET_ENTETE : supermarche_id
-    TICKET_ENTETE ||--o{ TICKET_LIGNE : ticket_id ON DELETE CASCADE
-    CATEGORIE ||--o{ TICKET_LIGNE : categorie_id
-
-
+    CLIENT ||--o{ TICKET_ENTETE : ""
+    SUPERMARCHE ||--o{ TICKET_ENTETE : ""
+    TICKET_ENTETE ||--o{ TICKET_LIGNE : ""
+    CATEGORIE ||--o{ TICKET_LIGNE : ""
 ```
