@@ -1,18 +1,11 @@
 import pyodbc
 
-server = "simplon-certif.database.windows.net"  # ex: simplon-certif.database.windows.net
+server = "simplon-certif.database.windows.net"  
 database = "simplon-certif"
 username = "sqladminuser"
 password = "LouisMoises123"
 driver = "{ODBC Driver 18 for SQL Server}"
 conn_str = f"Driver={driver};Server=tcp:{server},1433;Database={database};Uid={username};Pwd={password};Encrypt=yes;TrustServerCertificate=no;Connection Timeout=30;"
-
-# server = "localhost"
-# database = "MaNouvelleBaseDeDonnees"
-# username = "SA"
-# password = "MotDePasseUltraFort123!"
-# driver = "{ODBC Driver 18 for SQL Server}"
-# conn_str = f"DRIVER={driver};SERVER={server};DATABASE={database};UID={username};PWD={password};Encrypt=yes;TrustServerCertificate=yes;"
 
 conn = pyodbc.connect(conn_str)
 cursor = conn.cursor()
@@ -23,10 +16,11 @@ IF OBJECT_ID('client', 'U') IS NULL
 BEGIN
     CREATE TABLE client (
         client_id INT PRIMARY KEY IDENTITY(1,1),
-        nom NVARCHAR(100) NOT NULL,
-        prenom NVARCHAR(100) NOT NULL,
-        email NVARCHAR(100) UNIQUE,
-        budget DECIMAL(10,2) DEFAULT 0.00,
+        nom_client NVARCHAR(100) NOT NULL,
+        prenom_client NVARCHAR(100) NOT NULL,
+        email_client NVARCHAR(100) UNIQUE,
+        adresse_client NVARCHAR(100) UNIQUE,               
+        budget_client DECIMAL(10,2) DEFAULT 0.00,
         date_creation DATETIME NOT NULL DEFAULT GETDATE(),
         date_modification DATETIME NOT NULL DEFAULT GETDATE()
     )
@@ -53,16 +47,18 @@ BEGIN
     -- On ne met à jour que nom, prenom, email, budget
     UPDATE c
     SET
-        c.nom = ISNULL(i.nom, c.nom),
-        c.prenom = ISNULL(i.prenom, c.prenom),
-        c.email = ISNULL(i.email, c.email),
-        c.budget = ISNULL(i.budget, c.budget),
+        c.nom_client = ISNULL(i.nom_client, c.nom_client),
+        c.prenom_client = ISNULL(i.prenom_client, c.prenom_client),
+        c.email_client = ISNULL(i.email_client, c.email_client),
+        c.adresse_client = ISNULL(i.adresse_client, c.adresse_client),               
+        c.budget_client = ISNULL(i.budget_client, c.budget_client),
         c.date_modification = CASE
             WHEN 
-                (ISNULL(i.nom, c.nom) <> c.nom OR
-                 ISNULL(i.prenom, c.prenom) <> c.prenom OR
-                 ISNULL(i.email, c.email) <> c.email OR
-                 ISNULL(i.budget, c.budget) <> c.budget)
+                (ISNULL(i.nom_client, c.nom_client) <> c.nom_client OR
+                 ISNULL(i.prenom_client, c.prenom_client) <> c.prenom_client OR
+                 ISNULL(i.email_client, c.email_client) <> c.email_client OR
+                 ISNULL(i.adresse_client, c.adresse_client) <> c.adresse_client OR               
+                 ISNULL(i.budget_client, c.budget_client) <> c.budget_client)
             THEN GETDATE()
             ELSE c.date_modification
         END
@@ -73,19 +69,34 @@ END
 conn.commit()
 print("Trigger 'trg_update_date_modification_client' créé.")
 
-# 2. Créer la table supermarche
+# 6. Créer la table taille_enseigne
 cursor.execute("""
-IF OBJECT_ID('supermarche', 'U') IS NULL
+IF OBJECT_ID('taille_enseigne', 'U') IS NULL
 BEGIN
-    CREATE TABLE supermarche (
-        supermarche_id INT PRIMARY KEY IDENTITY(1,1),
-        supermarche_nom NVARCHAR(200) NOT NULL,
-        supermarche_adresse NVARCHAR(300)
+    CREATE TABLE taille_enseigne (
+        taille_enseigne_id INT PRIMARY KEY IDENTITY(1,1),
+        libelle_taille_enseigne NVARCHAR(100) NOT NULL UNIQUE
     )
 END
 """)
 conn.commit()
-print("Table 'supermarche' créée ou existe déjà.")
+print("Table 'taille_enseigne' créée ou existe déjà.")
+
+# 2. Créer la table enseigne
+cursor.execute("""
+IF OBJECT_ID('enseigne', 'U') IS NULL
+BEGIN
+    CREATE TABLE enseigne (
+        enseigne_id INT PRIMARY KEY IDENTITY(1,1),
+        enseigne_nom NVARCHAR(200) NOT NULL,
+        enseigne_adresse NVARCHAR(300),
+        taille_enseigne_id INT NULL,
+        FOREIGN KEY (taille_enseigne_id) REFERENCES taille_enseigne(taille_enseigne_id)               
+    )
+END
+""")
+conn.commit()
+print("Table 'enseigne' créée ou existe déjà.")
 
 
 # 3. Créer la table ticket_entete
@@ -96,9 +107,10 @@ BEGIN
         ticket_id INT PRIMARY KEY IDENTITY(1,1),
         client_id INT NULL,
         date_heure_ticket DATETIME NOT NULL DEFAULT GETDATE(),
-        supermarche_id INT NULL, 
+        enseigne_id INT NULL,
+        montant_total_ticket INT NULL, 
         FOREIGN KEY (client_id) REFERENCES client(client_id) ON DELETE SET NULL,
-        FOREIGN KEY (supermarche_id) REFERENCES supermarche(supermarche_id)               
+        FOREIGN KEY (enseigne_id) REFERENCES enseigne(enseigne_id)               
     )
 END
 """)
@@ -106,18 +118,18 @@ conn.commit()
 print("Table 'ticket_entete' créée ou existe déjà.")
 
 
-# 4. Créer la table categorie 
+# 4. Créer la table categorie_produit 
 cursor.execute("""
-IF OBJECT_ID('categorie', 'U') IS NULL
+IF OBJECT_ID('categorie_produit', 'U') IS NULL
 BEGIN
-    CREATE TABLE categorie (
-        categorie_id INT PRIMARY KEY IDENTITY(1,1),
-        nom NVARCHAR(100) NOT NULL
+    CREATE TABLE categorie_produit (
+        categorie_produit_id INT PRIMARY KEY IDENTITY(1,1),
+        nom_categorie_produit NVARCHAR(300)
     )
 END
 """)
 conn.commit()
-print("Table 'categorie' créée ou existe déjà.")
+print("Table 'categorie_produit' créée ou existe déjà.")
 
 
 # 5. Créer la table ticket_ligne 
@@ -126,13 +138,13 @@ IF OBJECT_ID('ticket_ligne', 'U') IS NULL
 BEGIN
     CREATE TABLE ticket_ligne (
         ticket_id INT NOT NULL,
-        libelle NVARCHAR(100) NOT NULL,
+        libelle_produit NVARCHAR(100) NOT NULL,
         quantite INT NOT NULL DEFAULT 1,
-        categorie_id INT NULL,
+        categorie_produit_id INT NULL,
         prix_unitaire DECIMAL(10,2) NOT NULL,
-        prix_total AS (quantite * prix_unitaire), -- colonne calculée
+        montant_total_ligne AS (quantite * prix_unitaire), -- colonne calculée
         FOREIGN KEY (ticket_id) REFERENCES ticket_entete(ticket_id) ON DELETE CASCADE,
-        FOREIGN KEY (categorie_id) REFERENCES categorie(categorie_id)
+        FOREIGN KEY (categorie_produit_id) REFERENCES categorie_produit(categorie_produit_id)
     )
 END
 """)
