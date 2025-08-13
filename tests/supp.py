@@ -1,5 +1,9 @@
 import pyodbc
 
+"""
+Script servant à supprimer les tables de la bdd hébergée sur Azure, pour en recréer d'autres
+"""
+
 server = "simplon-certif.database.windows.net"  # ex: simplon-certif.database.windows.net
 database = "simplon-certif"
 username = "sqladminuser"
@@ -7,10 +11,8 @@ password = "LouisMoises123"
 driver = "{ODBC Driver 18 for SQL Server}"
 conn_str = f"Driver={driver};Server=tcp:{server},1433;Database={database};Uid={username};Pwd={password};Encrypt=yes;TrustServerCertificate=no;Connection Timeout=30;"
 
-
 conn = pyodbc.connect(conn_str)
 cursor = conn.cursor()
-
 
 cursor.execute("""
 DECLARE @sql NVARCHAR(MAX) = N'';

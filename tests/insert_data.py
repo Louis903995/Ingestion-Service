@@ -1,3 +1,4 @@
+"""
 # Supprimer toutes les données des tables 
 cursor.execute("DELETE FROM supermarche")
 cursor.execute("DELETE FROM categorie")
@@ -12,29 +13,31 @@ cursor.execute("DBCC CHECKIDENT ('categorie', RESEED, 0)")
 cursor.execute("DBCC CHECKIDENT ('ticket', RESEED, 0)")
 cursor.execute("DBCC CHECKIDENT ('client', RESEED, 0)")
 conn.commit()
+"""
 
+### Exemple de data fictives
 
-
-### Exemple de data
-
-# Insérer les clients et récupérer leurs IDs
+# Insérer des clients fictifs et récupérer leurs IDs
 clients_data = [
-    ("Dupont", "Victor", 200, "2018-06-06"),
-    ("Martin", "Sophie", 300, "2018-06-06"),
-    ("Lemoine", "Claire", 150, "2018-06-06"),
-    ("Moises", "Louis", 162, "2018-06-06"),
-    ("Brad", "Pitt", 89, "2018-06-06")
+    ("Dupont", "Victor", "victor.dupont@email.com", 200.00),
+    ("Martin", "Sophie", "sophie.martin@email.com", 300.00),
+    ("Lemoine", "Claire", "claire.lemoine@email.com", 150.00),
+    ("Moises", "Louis", "louis.moises@email.com", 162.00),
+    ("Brad", "Pitt", "brad.pitt@email.com", 89.00)
 ]
 
 client_ids = []
 for client in clients_data:
     cursor.execute("""
-        INSERT INTO client (nom, prenom, budget, date_enregistrement)
+        INSERT INTO client (nom, prenom, email, budget)
         OUTPUT INSERTED.client_id
         VALUES (?, ?, ?, ?)
     """, client)
     client_ids.append(cursor.fetchone()[0])
+
 conn.commit()
+print(f"{len(client_ids)} clients insérés avec succès.")
+
 
 # Insérer les tickets liés aux bons client_id
 tickets_data = [

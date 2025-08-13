@@ -43,23 +43,52 @@ IF OBJECT_ID('trg_update_date_modification_client', 'TR') IS NOT NULL
 conn.commit()
 
 cursor.execute("""
-CREATE TRIGGER trg_update_date_modification_client
+CREATE TRIGGER trg_prevent_manual_update_date_modification
 ON client
-AFTER UPDATE
+INSTEAD OF UPDATE
 AS
 BEGIN
     SET NOCOUNT ON;
-    UPDATE client
-    SET date_modification = GETDATE()
-    FROM inserted i
-    WHERE client.client_id = i.client_id;
+
+    -- On ne met à jour que nom, prenom, email, budget
+    UPDATE c
+    SET
+        c.nom = ISNULL(i.nom, c.nom),
+        c.prenom = ISNULL(i.prenom, c.prenom),
+        c.email = ISNULL(i.email, c.email),
+        c.budget = ISNULL(i.budget, c.budget),
+        c.date_modification = CASE
+            WHEN 
+                (ISNULL(i.nom, c.nom) <> c.nom OR
+                 ISNULL(i.prenom, c.prenom) <> c.prenom OR
+                 ISNULL(i.email, c.email) <> c.email OR
+                 ISNULL(i.budget, c.budget) <> c.budget)
+            THEN GETDATE()
+            ELSE c.date_modification
+        END
+    FROM client c
+    INNER JOIN inserted i ON c.client_id = i.client_id;
 END
 """)
 conn.commit()
 print("Trigger 'trg_update_date_modification_client' créé.")
 
+# 2. Créer la table supermarche
+cursor.execute("""
+IF OBJECT_ID('supermarche', 'U') IS NULL
+BEGIN
+    CREATE TABLE supermarche (
+        supermarche_id INT PRIMARY KEY IDENTITY(1,1),
+        magasin_nom NVARCHAR(200) NOT NULL,
+        magasin_adresse NVARCHAR(300)
+    )
+END
+""")
+conn.commit()
+print("Table 'supermarche' créée ou existe déjà.")
 
-# 2. Créer la table ticket_entete
+
+# 3. Créer la table ticket_entete
 cursor.execute("""
 IF OBJECT_ID('ticket_entete', 'U') IS NULL
 BEGIN
@@ -67,9 +96,9 @@ BEGIN
         ticket_id INT PRIMARY KEY IDENTITY(1,1),
         client_id INT NULL,
         date_heure_ticket DATETIME NOT NULL DEFAULT GETDATE(),
-        magasin_nom NVARCHAR(200) NOT NULL,
-        magasin_adresse NVARCHAR(300),
-        FOREIGN KEY (client_id) REFERENCES client(client_id) ON DELETE SET NULL
+        supermarche_id INT NULL, 
+        FOREIGN KEY (client_id) REFERENCES client(client_id) ON DELETE SET NULL,
+        FOREIGN KEY (supermarche_id) REFERENCES supermarche(supermarche_id)               
     )
 END
 """)
@@ -77,21 +106,21 @@ conn.commit()
 print("Table 'ticket_entete' créée ou existe déjà.")
 
 
-# 3. Créer la table correspondance 
+# 4. Créer la table categorie 
 cursor.execute("""
-IF OBJECT_ID('correspondance', 'U') IS NULL
+IF OBJECT_ID('categorie', 'U') IS NULL
 BEGIN
-    CREATE TABLE correspondance (
+    CREATE TABLE categorie (
         categorie_id INT PRIMARY KEY IDENTITY(1,1),
         nom NVARCHAR(100) NOT NULL
     )
 END
 """)
 conn.commit()
-print("Table 'correspondance' créée ou existe déjà.")
+print("Table 'categorie' créée ou existe déjà.")
 
 
-# 4. Créer la table ticket_ligne 
+# 5. Créer la table ticket_ligne 
 cursor.execute("""
 IF OBJECT_ID('ticket_ligne', 'U') IS NULL
 BEGIN
@@ -104,7 +133,7 @@ BEGIN
         prix_unitaire DECIMAL(10,2) NOT NULL,
         prix_total AS (quantite * prix_unitaire), -- colonne calculée
         FOREIGN KEY (ticket_id) REFERENCES ticket_entete(ticket_id) ON DELETE CASCADE,
-        FOREIGN KEY (categorie_id) REFERENCES correspondance(categorie_id)
+        FOREIGN KEY (categorie_id) REFERENCES categorie(categorie_id)
     )
 END
 """)
