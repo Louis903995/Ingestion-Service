@@ -1,43 +1,43 @@
-# MCD - Base de données Supermarché
-
-```mermaid
 erDiagram
     CLIENT {
         int client_id PK
         nvarchar nom
         nvarchar prenom
+        nvarchar email
         decimal budget
-        datetime date_enregistrement
+        datetime date_creation
+        datetime date_modification
     }
-    
-    TICKET {
-        int id_ticket PK
-        int client_id FK
-        nvarchar libelle
-    }
-    
-    CATEGORIE {
-        int id_cat PK
-        int id_ticket FK
-        nvarchar libelle
-        nvarchar categorie
-    }
-    
+
     SUPERMARCHE {
-        int id_supermarche PK
-        int id_ticket FK
-        nvarchar nom_magasin
-        datetime date_achat
+        int supermarche_id PK
+        nvarchar magasin_nom
+        nvarchar magasin_adresse
+    }
+
+    TICKET_ENTETE {
+        int ticket_id PK
+        int client_id FK
+        int supermarche_id FK
+        datetime date_heure_ticket
+    }
+
+    CATEGORIE {
+        int categorie_id PK
+        nvarchar nom
+    }
+
+    TICKET_LIGNE {
+        int ticket_ligne_id PK
+        int ticket_id FK
+        nvarchar libelle
+        int quantite
+        int categorie_id FK
+        decimal prix_unitaire
         decimal prix_total
     }
-    
-    CATEGORIE_PRODUITS {
-        int id PK
-        nvarchar libelle
-        nvarchar categorie
-        datetime created_at
-    }
-    
-    CLIENT ||--o{ TICKET : "possède"
-    TICKET ||--o{ CATEGORIE : "contient"
-    TICKET ||--o{ SUPERMARCHE : "émis par"
+
+    CLIENT ||--o{ TICKET_ENTETE : "fait"
+    SUPERMARCHE ||--o{ TICKET_ENTETE : "émet"
+    TICKET_ENTETE ||--o{ TICKET_LIGNE : "contient"
+    CATEGORIE ||--o{ TICKET_LIGNE : "classifie"
