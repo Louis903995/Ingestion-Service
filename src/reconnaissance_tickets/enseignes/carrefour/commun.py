@@ -1,36 +1,26 @@
 import re
-from typing import Optional
-from levenshtein import extrait_lignes_entre_patterns_similaires
 from datetime import datetime
-from pydantic import BaseModel
 from typing import List
-
-
-class LigneTicketScanne(BaseModel):
-    taux_tva: Optional[int]
-    libelle_produit: Optional[str]
-    qte: Optional[int]
-    pu: Optional[float]
-    montant: Optional[float]
-
-
-def trouve_nom_enseigne_crf_market(texte: str) -> str | None:
-    # Recherche "#" suivi de 0 ou plusieurs espaces puis "market", insensible à la casse.
-    # recherche toute ligne non vide après "market"
-    # capture le début de la ligne jusqu'à "Tel" non inclus
-    match = re.search(
-        r"#\s*market.*?\n\s*\n*([^\n]+?)\s*Tel:", texte, re.IGNORECASE | re.DOTALL
-    )
-    if match:
-        return match.group(1).strip()
+from reconnaissance_tickets.extraction_fuzzy import (
+    extraire_apres_pattern_flou,
+    extraire_avant_pattern_flou,
+)
+from reconnaissance_tickets.model_ticket import LigneTicketScanne
 
 
 def trouve_tel_enseigne(texte: str) -> str | None:
-    # Regex pour trouver le numéro après 'Tel' en fin de ligne
-    # un numéro est composé de 4 séries de 2 chiffres espacés par des " "
-    match = re.search(r"Tel[:\s]*([0-9]{2}(?:\s[0-9]{2}){4})\s*$", texte, re.MULTILINE)
+    pattern = (
+        r"Tel:\s*"  # "Tel:" suivi d'espaces éventuels
+        r"("  # Début de la capture du numéro
+        r"[0-9]{2}"  # 2 chiffres
+        r"(?:[ .]+[0-9]{2}){4}"  # 4 groupes de séparateur(s) (espace ou point) + 2 chiffres
+        r")"  # Fin de la capture
+        r"(?:\s+|\s*\n)"  # Après le numéro: un ou plusieurs espaces OU zéro+espace puis saut de ligne
+    )
+    match = re.search(pattern, texte)
     if match:
         return match.group(1)
+    return None
 
 
 def trouve_date_heure(texte: str) -> datetime | None:
@@ -43,37 +33,15 @@ def trouve_date_heure(texte: str) -> datetime | None:
         return dt
 
 
-def isole_lignes_tableau(texte: str) -> str:
-    texte_reduit = extrait_lignes_entre_patterns_similaires(
-        texte,
-        "TVA DESCRIPTION QTE x P.U. MONTANT TTC",
-        "ARTICLE(S) TOTAL A PAYER",
-        seuil_similarite=0.95,
+def isole_lignes_tableau(texte: str) -> List[str]:
+    texte_intermediaire = extraire_apres_pattern_flou(
+        texte, "TVA DESCRIPTION QTE x P.U. MONTANT TTC"
     )
-    # print(texte_reduit)
-
-    pattern = re.compile(
-        r"""
-        ^\s*                  # début de ligne + espaces optionnels
-        \|                    # pipe ouvrant
-        (?:\s*-{3,}\s*\|){2,3}# 2 ou 3 groupes (pour 3 ou 4 colonnes)
-        \s*-{3,}\s*           # dernière colonne : >=3 -
-        \|                    # pipe fermant
-        \s*$                  # espaces optionnels + fin de ligne
-        """,
-        re.MULTILINE | re.VERBOSE,
+    texte_reduit = extraire_avant_pattern_flou(
+        texte_intermediaire, "ARTICLE(S) TOTAL A PAYER"
     )
-
-    lignes = texte_reduit.splitlines()
-    for i, ligne in enumerate(lignes):
-        if pattern.match(ligne):
-            # On avance après le pattern
-            index = i + 1
-            # On saute toutes les lignes blanches (espaces ou vide)
-            while index < len(lignes) and lignes[index].strip() == "":
-                index += 1
-            # On retourne toutes les lignes à partir de la première ligne utile
-            return lignes[index:]
+    if texte_reduit:
+        return texte_reduit.splitlines()
     return []
 
 
@@ -133,15 +101,3 @@ def interprete_lignes(texte: str) -> List[LigneTicketScanne]:
             )
         )
     return resultat
-
-
-# filename = "sample.md"
-filename = "sample-modifié.md"
-with open(filename, "r") as f:
-    sample = f.read()
-    # print(trouve_nom_enseigne_crf_market(sample))
-    # print(trouve_tel_enseigne(sample))
-    # lignes = isole_lignes_tableau(sample)
-    # # print(lignes)
-    # print(interprete_lignes(lignes))
-    print(trouve_date_heure(sample))

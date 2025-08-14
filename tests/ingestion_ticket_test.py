@@ -15,7 +15,8 @@ def encode_image(image_path: str) -> bytes | None:
         return None
 
 
-image_path = "images/carrefour1.jpeg"
+image_path = "images/carrefour_city_1.jpg"
+image_path = "images/carrefour_market_1.jpeg"
 base64_image = encode_image(image_path)
 
 resultat = ingestion_image(1, base64_image)
