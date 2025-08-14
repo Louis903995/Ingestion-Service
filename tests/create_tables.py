@@ -69,7 +69,7 @@ END
 conn.commit()
 print("Trigger 'trg_update_date_modification_client' créé.")
 
-# 6. Créer la table taille_enseigne
+# 2. Créer la table taille_enseigne
 cursor.execute("""
 IF OBJECT_ID('taille_enseigne', 'U') IS NULL
 BEGIN
@@ -82,7 +82,7 @@ END
 conn.commit()
 print("Table 'taille_enseigne' créée ou existe déjà.")
 
-# 2. Créer la table enseigne
+# 3. Créer la table enseigne
 cursor.execute("""
 IF OBJECT_ID('enseigne', 'U') IS NULL
 BEGIN
@@ -90,7 +90,8 @@ BEGIN
         enseigne_id INT PRIMARY KEY IDENTITY(1,1),
         enseigne_nom NVARCHAR(200) NOT NULL,
         enseigne_adresse NVARCHAR(300),
-        taille_enseigne_id INT NULL,
+        enseigne_numero_telephone NVARCHAR(300),
+        taille_enseigne_id INT NULL
         FOREIGN KEY (taille_enseigne_id) REFERENCES taille_enseigne(taille_enseigne_id)               
     )
 END
@@ -99,7 +100,7 @@ conn.commit()
 print("Table 'enseigne' créée ou existe déjà.")
 
 
-# 3. Créer la table ticket_entete
+# 4. Créer la table ticket_entete
 cursor.execute("""
 IF OBJECT_ID('ticket_entete', 'U') IS NULL
 BEGIN
@@ -118,7 +119,7 @@ conn.commit()
 print("Table 'ticket_entete' créée ou existe déjà.")
 
 
-# 4. Créer la table categorie_produit 
+# 5. Créer la table categorie_produit 
 cursor.execute("""
 IF OBJECT_ID('categorie_produit', 'U') IS NULL
 BEGIN
@@ -132,7 +133,7 @@ conn.commit()
 print("Table 'categorie_produit' créée ou existe déjà.")
 
 
-# 5. Créer la table ticket_ligne 
+# 6. Créer la table ticket_ligne 
 cursor.execute("""
 IF OBJECT_ID('ticket_ligne', 'U') IS NULL
 BEGIN
