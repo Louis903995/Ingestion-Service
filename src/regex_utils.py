@@ -57,19 +57,20 @@ def isole_lignes_tableau(texte: str) -> str:
 
 
 def interprete_lignes(texte: str):
-
     pattern = re.compile(
         r"""
-        ^\s*\|?\s*             # Début ligne, pipe et espaces optionnels
-        (\d*)                  # Col 1: quantité (peut être vide pour totaux)
-        \s*\|\s*               # Séparateur pipe
-        ([^|]+?)               # Col 2: nom produit
+    ^\s*\|?\s*                 # Début ligne, pipe et espaces optionnels
+    (\d*)                      # Col 1: quantité (peut être vide pour totaux)
+    \s*\|\s*                   # Séparateur pipe
+    ([^|]+?)                   # Col 2: nom produit
+    (?:                        # Groupe optionnel pour Col3
         \s*\|\s*               # Séparateur pipe
         ([\dxX., ]*)           # Col 3: qte x PU ou vide (ex: '4 x 3.54')
-        \s*\|\s*               # Séparateur pipe
-        (\d+[.,]\d+)\s*€?      # Col 4: prix avec ou sans le symbole euro
-        \s*\|?\s*$             # Pipe et espaces optionnels, fin de ligne
-        """,
+    )?                         # <- OPTIONNEL !
+    \s*\|\s*                   # Séparateur pipe
+    (\d+[.,]\d+)\s*€?          # Col 4: prix avec ou sans le symbole euro
+    \s*\|?\s*$                 # Pipe et espaces optionnels, fin de ligne
+    """,
         re.VERBOSE,
     )
     for ligne in texte:
@@ -79,7 +80,10 @@ def interprete_lignes(texte: str):
 
         taux_tva = m[1].strip()
         produit = m[2].strip()
-        qte_par_pu = m[3].replace(",", ".").replace(" ", "").strip()
+        if m[3]:
+            qte_par_pu = m[3].replace(",", ".").replace(" ", "").strip()
+        else:
+            qte_par_pu = None
         prix = m[4].replace(",", ".").strip()
 
         # Gestion de Col3 au format "q x pu"
@@ -102,10 +106,12 @@ def interprete_lignes(texte: str):
         )
 
 
-with open("sample.md", "r") as f:
+filename = "sample.md"
+# filename = "sample-modifié.md"
+with open(filename, "r") as f:
     sample = f.read()
-    # print(trouve_nom_enseigne(sample))
-    # print(trouve_tel_enseigne(sample))
+    print(trouve_nom_enseigne(sample))
+    print(trouve_tel_enseigne(sample))
     lignes = isole_lignes_tableau(sample)
     # print(lignes)
     print(interprete_lignes(lignes))
