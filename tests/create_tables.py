@@ -22,14 +22,14 @@ BEGIN
         adresse_client NVARCHAR(100) UNIQUE,               
         budget_client DECIMAL(10,2) DEFAULT 0.00,
         date_creation DATETIME NOT NULL DEFAULT GETDATE(),
-        date_modification DATETIME NOT NULL DEFAULT GETDATE()
+        date_derniere_modification DATETIME NOT NULL DEFAULT GETDATE()
     )
 END
 """)
 conn.commit()
 print("Table 'client' créée ou existe déjà.")
 
-# Mise à jour automatique de date_modification sur client
+# Mise à jour automatique de date_derniere_modification sur client
 cursor.execute("""
 IF OBJECT_ID('trg_update_date_modification_client', 'TR') IS NOT NULL
     DROP TRIGGER trg_update_date_modification_client;
@@ -52,7 +52,7 @@ BEGIN
         c.email_client = ISNULL(i.email_client, c.email_client),
         c.adresse_client = ISNULL(i.adresse_client, c.adresse_client),               
         c.budget_client = ISNULL(i.budget_client, c.budget_client),
-        c.date_modification = CASE
+        c.date_derniere_modification = CASE
             WHEN 
                 (ISNULL(i.nom_client, c.nom_client) <> c.nom_client OR
                  ISNULL(i.prenom_client, c.prenom_client) <> c.prenom_client OR
@@ -60,7 +60,7 @@ BEGIN
                  ISNULL(i.adresse_client, c.adresse_client) <> c.adresse_client OR               
                  ISNULL(i.budget_client, c.budget_client) <> c.budget_client)
             THEN GETDATE()
-            ELSE c.date_modification
+            ELSE c.date_derniere_modification
         END
     FROM client c
     INNER JOIN inserted i ON c.client_id = i.client_id;
