@@ -1,6 +1,17 @@
 import re
-
+from typing import Optional
 from levenshtein import extrait_lignes_entre_patterns_similaires
+
+from pydantic import BaseModel
+from typing import List
+
+
+class LigneTicketScanne(BaseModel):
+    taux_tva: Optional[int]
+    libelle_produit: Optional[str]
+    qte: Optional[int]
+    pu: Optional[float]
+    montant: Optional[float]
 
 
 def trouve_nom_enseigne(texte: str) -> str | None:
@@ -56,7 +67,7 @@ def isole_lignes_tableau(texte: str) -> str:
     return []
 
 
-def interprete_lignes(texte: str):
+def interprete_lignes(texte: str) -> List[LigneTicketScanne]:
     pattern = re.compile(
         r"""
     ^\s*\|?\s*                 # Début ligne, pipe et espaces optionnels
@@ -73,12 +84,15 @@ def interprete_lignes(texte: str):
     """,
         re.VERBOSE,
     )
+    resultat = []
     for ligne in texte:
         m = pattern.match(ligne)
         if not m:
             continue  # ignore les lignes non valides
 
         taux_tva = m[1].strip()
+        if taux_tva == "":
+            taux_tva = None
         libelle_produit = m[2].strip()
         if m[3]:
             qte_par_pu = m[3].replace(",", ".").replace(" ", "").strip()
@@ -99,14 +113,16 @@ def interprete_lignes(texte: str):
         else:
             qte = None
             pu = None
-        z = {
-            "taux_tva": taux_tva,
-            "libelle_produit": libelle_produit,
-            "qte": qte,
-            "pu": pu,
-            "montant": montant,
-        }
-        print(z)
+        resultat.append(
+            LigneTicketScanne(
+                taux_tva=taux_tva,
+                libelle_produit=libelle_produit,
+                qte=qte,
+                pu=pu,
+                montant=montant,
+            )
+        )
+    return resultat
 
 
 # filename = "sample.md"
