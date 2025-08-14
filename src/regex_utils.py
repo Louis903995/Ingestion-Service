@@ -27,7 +27,7 @@ def isole_lignes_tableau(texte: str) -> str:
         texte,
         "TVA DESCRIPTION QTE x P.U. MONTANT TTC",
         "ARTICLE(S) TOTAL A PAYER",
-        seuil_similarite=0.90,
+        seuil_similarite=0.95,
     )
     # print(texte_reduit)
 

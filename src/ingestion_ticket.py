@@ -5,7 +5,7 @@ from mistralai import Mistral
 
 
 load_env_file_to_environ()
-print(os.environ.get("MISTRAL_API_KEY"))
+print(os.environ.get("MISTRAL-API-KEY"))
 
 
 # transforme l'image en un json (dict) intermédiaire
