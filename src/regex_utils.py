@@ -79,35 +79,38 @@ def interprete_lignes(texte: str):
             continue  # ignore les lignes non valides
 
         taux_tva = m[1].strip()
-        produit = m[2].strip()
+        libelle_produit = m[2].strip()
         if m[3]:
             qte_par_pu = m[3].replace(",", ".").replace(" ", "").strip()
         else:
             qte_par_pu = None
-        prix = m[4].replace(",", ".").strip()
+        montant = m[4].replace(",", ".").strip()
 
-        # Gestion de Col3 au format "q x pu"
+        # Gestion de la troisème colonne optionnelle au format "q x pu"
         if qte_par_pu:
             if "x" in qte_par_pu.lower():
                 try:
                     q_str, pu_str = re.split(r"x", qte_par_pu, flags=re.IGNORECASE)
-                    q = int(q_str)
+                    qte = int(q_str)
                     pu = float(pu_str)
-                    qte_par_pu_affiche = f"{q} x {pu:.2f}"
                 except Exception:
-                    qte_par_pu_affiche = qte_par_pu
-            else:
-                qte_par_pu_affiche = qte_par_pu
+                    # on ne fait rien, on se contente de ce qu'on a réussi à récupérer
+                    pass
         else:
-            qte_par_pu_affiche = ""
+            qte = None
+            pu = None
+        z = {
+            "taux_tva": taux_tva,
+            "libelle_produit": libelle_produit,
+            "qte": qte,
+            "pu": pu,
+            "montant": montant,
+        }
+        print(z)
 
-        print(
-            f"Taux tva: {taux_tva}, Produit: {produit}, Col3: '{qte_par_pu_affiche}', Prix: {prix}"
-        )
 
-
-filename = "sample.md"
-# filename = "sample-modifié.md"
+# filename = "sample.md"
+filename = "sample-modifié.md"
 with open(filename, "r") as f:
     sample = f.read()
     print(trouve_nom_enseigne(sample))
