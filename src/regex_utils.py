@@ -1,7 +1,7 @@
 import re
 from typing import Optional
 from levenshtein import extrait_lignes_entre_patterns_similaires
-
+from datetime import datetime
 from pydantic import BaseModel
 from typing import List
 
@@ -14,7 +14,7 @@ class LigneTicketScanne(BaseModel):
     montant: Optional[float]
 
 
-def trouve_nom_enseigne(texte: str) -> str | None:
+def trouve_nom_enseigne_crf_market(texte: str) -> str | None:
     # Recherche "#" suivi de 0 ou plusieurs espaces puis "market", insensible à la casse.
     # recherche toute ligne non vide après "market"
     # capture le début de la ligne jusqu'à "Tel" non inclus
@@ -31,6 +31,16 @@ def trouve_tel_enseigne(texte: str) -> str | None:
     match = re.search(r"Tel[:\s]*([0-9]{2}(?:\s[0-9]{2}){4})\s*$", texte, re.MULTILINE)
     if match:
         return match.group(1)
+
+
+def trouve_date_heure(texte: str) -> datetime | None:
+    # Regex pour trouver le numéro après 'Tel' en fin de ligne
+    # un numéro est composé de 4 séries de 2 chiffres espacés par des " "
+    match = re.search(r"(\d{2}/\d{2}/\d{4} \d{2}:\d{2}:\d{2})", texte, re.MULTILINE)
+    if match:
+        date_str = match.group(1)
+        dt = datetime.strptime(date_str, "%d/%m/%Y %H:%M:%S")
+        return dt
 
 
 def isole_lignes_tableau(texte: str) -> str:
@@ -129,8 +139,9 @@ def interprete_lignes(texte: str) -> List[LigneTicketScanne]:
 filename = "sample-modifié.md"
 with open(filename, "r") as f:
     sample = f.read()
-    print(trouve_nom_enseigne(sample))
-    print(trouve_tel_enseigne(sample))
-    lignes = isole_lignes_tableau(sample)
-    # print(lignes)
-    print(interprete_lignes(lignes))
+    # print(trouve_nom_enseigne_crf_market(sample))
+    # print(trouve_tel_enseigne(sample))
+    # lignes = isole_lignes_tableau(sample)
+    # # print(lignes)
+    # print(interprete_lignes(lignes))
+    print(trouve_date_heure(sample))
