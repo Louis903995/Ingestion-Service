@@ -1,9 +1,9 @@
 import re
 from reconnaissance_tickets.model_ticket import TicketScanne
-from reconnaissance_tickets.enseignes.carrefour_city import (
+from reconnaissance_tickets.enseignes.carrefour.carrefour_city import (
     extrait_ticket_scanne as crf_city_extrait_ticket_scanne,
 )
-from reconnaissance_tickets.enseignes.carrefour_market import (
+from reconnaissance_tickets.enseignes.carrefour.carrefour_market import (
     extrait_ticket_scanne as crf_mkt_extrait_ticket_scanne,
 )
 

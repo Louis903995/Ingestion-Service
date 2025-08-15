@@ -26,3 +26,7 @@ create_network = "docker network create mon-reseau"
 run_sql_server = "docker run -e \"ACCEPT_EULA=Y\" -e \"SA_PASSWORD=MotDePasseUltraFort123!\" -p 1433:1433 --name sqlserver-dev -d --network mon-reseau mcr.microsoft.com/mssql/server:2022-latest"
 container = "docker run --name ingestion-service --network mon-reseau ingestion-service:latest"
 fastapi = "uvicorn app.main:app --reload"
+[dependency-groups]
+dev = [
+    "pytest>=8.4.1",
+]
