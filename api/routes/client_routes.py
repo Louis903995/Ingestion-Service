@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends
 from sqlmodel import Session
 from typing import List
-from models.client import Client
-from schemas.client_schema import ClientCreate, ClientUpdate
-from services.client_service import ClientService
-from database import get_session
+from ..models.client import Client
+from ..schemas.client import ClientCreate, ClientUpdate
+from ..services.client_service import ClientService
+from ..database import get_session
 
 router = APIRouter()
 

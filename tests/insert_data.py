@@ -18,18 +18,18 @@ conn.commit()
 
 # 2. Enseignes
 enseignes = [
-    ("Carrefour", "12 rue du Marché", taille_ids[2]),
-    ("Lidl", "45 avenue des Champs", taille_ids[1]),
-    ("Auchan", "78 boulevard du Nord", taille_ids[2]),
-    ("Aldi", "3 impasse des Lilas", taille_ids[0]),
-    ("Intermarché", "99 route de Paris", taille_ids[1])
+    ("Carrefour", "12 rue du Marché", "+33 6 12 34 56 78", taille_ids[2]),
+    ("Lidl", "45 avenue des Champs", "+33 7 98 76 54 32", taille_ids[1]),
+    ("Auchan", "78 boulevard du Nord", "+33 1 23 45 67 89", taille_ids[2]),
+    ("Aldi", "3 impasse des Lilas", "+33 9 87 65 43 21", taille_ids[0]),
+    ("Intermarché", "99 route de Paris", "+33 4 56 78 90 12", taille_ids[1])
 ]
 enseigne_ids = []
 for enseigne in enseignes:
     cursor.execute("""
-        INSERT INTO enseigne (enseigne_nom, enseigne_adresse, taille_enseigne_id)
+        INSERT INTO enseigne (enseigne_nom, enseigne_adresse, enseigne_numero_telephone, taille_enseigne_id)
         OUTPUT INSERTED.enseigne_id
-        VALUES (?, ?, ?)
+        VALUES (?, ?, ?, ?)
     """, enseigne)
     enseigne_ids.append(cursor.fetchone()[0])
 conn.commit()
