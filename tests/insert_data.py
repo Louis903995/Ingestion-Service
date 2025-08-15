@@ -27,7 +27,7 @@ enseignes = [
 enseigne_ids = []
 for enseigne in enseignes:
     cursor.execute("""
-        INSERT INTO enseigne (enseigne_nom, enseigne_adresse, enseigne_numero_telephone, taille_enseigne_id)
+        INSERT INTO enseigne (enseigne_nom, enseigne_adresse, enseigne_num_tel_ticket, taille_enseigne_id)
         OUTPUT INSERTED.enseigne_id
         VALUES (?, ?, ?, ?)
     """, enseigne)

@@ -90,7 +90,7 @@ BEGIN
         enseigne_id INT PRIMARY KEY IDENTITY(1,1),
         enseigne_nom NVARCHAR(200) NOT NULL,
         enseigne_adresse NVARCHAR(300),
-        enseigne_numero_telephone NVARCHAR(300),
+        enseigne_num_tel_ticket NVARCHAR(300),
         taille_enseigne_id INT NULL
         FOREIGN KEY (taille_enseigne_id) REFERENCES taille_enseigne(taille_enseigne_id)               
     )

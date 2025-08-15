@@ -22,7 +22,7 @@ erDiagram
         INT enseigne_id PK
         NVARCHAR enseigne_nom
         NVARCHAR enseigne_adresse
-        NVARCHAR enseigne_numero_telephone
+        NVARCHAR enseigne_num_tel_ticket
         INT taille_enseigne_id FK
     }
 
