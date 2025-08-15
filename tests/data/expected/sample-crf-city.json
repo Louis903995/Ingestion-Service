@@ -1,0 +1,22 @@
+{
+    "nom_enseigne": "SARL AJ.DISTRI 81 ROUTE NATIONALE 59152 CHERENG",
+    "tel_enseigne": "03.20.79.06.62",
+    "date_heure_ticket": "2025-08-14T20:39:23",
+    "montant_total_ticket": 0.0,
+    "lignes": [
+        {
+            "taux_tva": 5,
+            "libelle_produit": "*256G MAGN. MINI AM",
+            "qte": null,
+            "pu": null,
+            "montant": 4.6
+        },
+        {
+            "taux_tva": 5,
+            "libelle_produit": "*MINIPOT MACADAMIA",
+            "qte": null,
+            "pu": null,
+            "montant": 7.99
+        }
+    ]
+}
