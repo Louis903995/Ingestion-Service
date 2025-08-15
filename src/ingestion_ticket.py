@@ -1,10 +1,16 @@
 from datetime import datetime
+from api.database import engine
+from sqlmodel import Session
+from api.services.enseigne_service import EnseigneService
 from load_env import load_env_file_to_environ
 import os
 from mistralai import Mistral
 from reconnaissance_tickets.model_ticket import LigneTicketScanne, TicketScanne
 from reconnaissance_tickets.resolver import extrait_ticket_scanne
 
+enseignes_dict = None
+with Session(engine) as session:
+    enseignes_dict = EnseigneService.get_enseignes_dict(session)
 load_env_file_to_environ()
 
 
@@ -27,6 +33,10 @@ def interprete_image(base64_image: bytes) -> TicketScanne | None:
 # retrouve l'id de l'enseigne en fonction du nom d'enseigne scanné
 # et ajoute la propriété "id_enseigne" ainsi que la valeur de l'id
 def resoud_enseigne(ticket: TicketScanne) -> dict:
+    x = EnseigneService.trouve_enseigne_id(
+        enseignes_dict, ticket.nom_enseigne, ticket.tel_enseigne
+    )
+    print(x)
     return ticket
 
 
