@@ -28,6 +28,11 @@ class TicketEnteteCreate(TicketEnteteBase):
 
 
 class TicketEnteteUpdate(TicketEnteteBase):
+    pass
+    """
+    Cette classe ne doit jamais être utilisée : les ticket ne sont jamais modifiés.
+    """
+
     def __init__(self, *args, **kwargs):
         raise RuntimeError(
             "TicketEnteteUpdate ne doit jamais être instanciée (entêtes non modifiables)"
@@ -73,7 +78,7 @@ class TicketLignesCreate(TicketLignesBase):
     pass
 
 
-class TicketLignesUpdate(SQLModel):
+class TicketLignesUpdate(TicketLignesBase):
     pass
 
     """

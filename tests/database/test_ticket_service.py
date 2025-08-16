@@ -113,6 +113,7 @@ def simple_ticket_scanne():
 
 def test_create_ticket_with_lignes_from_scan(session, simple_ticket_scanne):
     user_id = 42
+    simple_ticket_scanne["enseigne_id"] = 1
     ticket = TicketService.create_ticket_with_lignes_from_scan(
         session, user_id, simple_ticket_scanne
     )
