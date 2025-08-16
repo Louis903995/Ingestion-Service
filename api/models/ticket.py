@@ -12,6 +12,7 @@ class TicketEnteteBase(SQLModel):
 
 class TicketEntete(TicketEnteteBase, table=True):
     ticket_id: Optional[int] = Field(default=None, primary_key=True)
+    lignes: List["TicketLignes"] = Relationship(back_populates="ticket")
 
     __tablename__ = "TicketEntetes"
     __table_args__ = {"schema": "achats"}
@@ -46,8 +47,9 @@ if TYPE_CHECKING:
 
 
 class TicketLignes(TicketLignesBase, table=True):
+    ticket_ligne_id: Optional[int] = Field(default=None, primary_key=True)
     ticket_id: int = Field(foreign_key="achats.TicketEntetes.ticket_id")
-    lignes: List["TicketLignes"] = Relationship(back_populates="ticket")
+    ticket: Optional["TicketEntete"] = Relationship(back_populates="lignes")    
     categorie: Optional["ProduitCategorie"] = Relationship(
         sa_relationship_kwargs={"lazy": "joined"}
     )
@@ -79,4 +81,3 @@ class TicketLignesUpdate(SQLModel):
 
 
 TicketLignes.model_rebuild()
-
