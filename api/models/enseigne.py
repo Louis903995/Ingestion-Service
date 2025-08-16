@@ -1,6 +1,5 @@
 from typing import Optional
-from sqlmodel import SQLModel, Field, Session, select
-from fastapi import FastAPI, Depends, HTTPException
+from sqlmodel import SQLModel, Field
 
 
 class EnseigneBase(SQLModel):

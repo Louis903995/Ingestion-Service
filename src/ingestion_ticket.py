@@ -14,7 +14,6 @@ with Session(engine) as session:
 load_env_file_to_environ()
 
 
-# transforme l'image en TicketScanne
 def interprete_image(base64_image: bytes) -> TicketScanne | None:
     MISTRAL_KEY = os.environ.get("MISTRAL-API-KEY")
     if MISTRAL_KEY:
