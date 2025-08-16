@@ -1,9 +1,13 @@
 import pytest
 from sqlmodel import SQLModel, Session, create_engine, select
 from datetime import datetime, timedelta
-from api.database import engine
+from tests.database.fixtures import (
+    session,
+    nettoie_tout,
+    PYODBC_CONNECTION_STRING,
+    DB_NAME_TEST,
+)
 
-import pyodbc
 
 # Importe ici tes modèles et ton service
 from api.models.ticket import (
@@ -16,55 +20,42 @@ from api.models.ticket import (
 )
 from reconnaissance_tickets.model_ticket import TicketScanne, LigneTicketScanne
 from api.services.ticket_service import TicketService
-from tests.pyodbc_utils import (
-    cree_database_et_tables,
-    get_connection_string,
-    is_sql_server_running,
-)
-
-server = "localhost"
-# database = "simplon-certif"
-port = 1433
-database = "master"
-username = "SA"
-password = "Password123"
-driver = "ODBC Driver 18 for SQL Server"
-DB_NAME_TEST = "DB_TEST"
+from tests.pyodbc_utils import execute_script_sql
 
 
-# docker run -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=Password123" -p 1433:1433 --name sql1 --hostname sql1 -d mcr.microsoft.com/mssql/server:2025-latest
-CONNECTION_STRING = get_connection_string(
-    driver,
-    server,
-    port,
-    username,
-    password,
-    trust_server_certificate=True,
-    encrypt=False,
-)
+@pytest.fixture(scope="module", autouse=True)
+def setup_module():
+    execute_script_sql(
+        "sql/ajoute_categories.sql", DB_NAME_TEST, PYODBC_CONNECTION_STRING
+    )
+    yield
 
 
-@pytest.fixture
-def engine():
-    server = "simplon-certif.database.windows.net"
-    database = "simplon-certif"
-    username = "sqladminuser"
-    password = "LouisMoises123"
-    driver = "ODBC Driver 18 for SQL Server"
-    DATABASE_URL = f"mssql+pyodbc://{username}:{password}@{server}:1433/{database}?driver={driver.replace(' ', '+')}"
-    return create_engine(DATABASE_URL, echo=True)
+# @pytest.fixture(scope="module", autouse=True)
+# def teardown_module():
+#     """Exécuté UNE SEULE FOIS après tous les tests du module."""
+#     yield  # Le code après yield s'exécute après tous les tests
+#     print("\n🌳 [TEARDOWN MODULE] Nettoyage global (ex: supprimer la base de données)")
 
 
-@pytest.fixture
-def session(engine):
-    with Session(engine) as session:
-        yield session
+# # Méthode exécutée AVANT chaque test
+# @pytest.fixture(autouse=True, scope="function")
+# def setup():
+#     print("\n⏳ [SETUP] Avant le test")
+#     # Code d'initialisation (ex: créer une base de données, préparer des données)
+#     yield
+
+
+# # Méthode exécutée APRES chaque test
+# @pytest.fixture(autouse=True, scope="function")
+# def teardown():
+#     yield  # Le test s'exécute ici
+#     print("\n🧹 [TEARDOWN] Après le test")
+#     # Code de nettoyage (ex: supprimer des fichiers, vider une base)
 
 
 @pytest.fixture
 def simple_ticket_scanne():
-    # z = is_sql_server_running(CONNECTION_STRING)
-    k = cree_database_et_tables(DB_NAME_TEST, CONNECTION_STRING)
     return TicketScanne.model_validate_json(
         """{
         "nom_enseigne": "MARKET BAISIEUX",
@@ -122,9 +113,9 @@ def simple_ticket_scanne():
 
 def test_create_ticket_with_lignes_from_scan(session, simple_ticket_scanne):
     user_id = 42
-    # ticket = TicketService.create_ticket_with_lignes_from_scan(
-    #     session, user_id, simple_ticket_scanne
-    # )
+    ticket = TicketService.create_ticket_with_lignes_from_scan(
+        session, user_id, simple_ticket_scanne
+    )
     # assert ticket.ticket_id is not None
     # assert ticket.client_id == user_id
     # assert ticket.montant_total_ticket == 12.5

@@ -1,4 +1,6 @@
 import pyodbc
+import re
+import socket
 
 SCRIPT_CREATION_TOUTES_TABLES = "sql/create_toutes_tables.sql"
 
@@ -23,17 +25,53 @@ def get_connection_string(
 
 def is_sql_server_running(connection_string: str) -> bool:
     try:
-        with pyodbc.connect(connection_string) as conn:
-            return True
-    except Exception as e:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            host, port = (
+                re.search(r"SERVER=([^;]*)", connection_string).group(1).split(",")
+            )
+            port = int(port)
+            timeout = int(
+                re.search(r"Connection Timeout=([^;]*)", connection_string).group(1)
+            )
+            sock.settimeout(timeout)
+            sock.connect((host, port))
+            with pyodbc.connect(connection_string):
+                return True
+    except Exception:
+        return False
+
+
+def force_db_dans_conn_string(connection_string: str, db_name) -> str:
+    if "DATABASE=" in connection_string:
+        return re.sub(r"(DATABASE=)[^;]+", f"DATABASE={db_name}", connection_string)
+    else:
+        separator = ";" if not connection_string.endswith(";") else ""
+        return f"{connection_string}{separator}DATABASE={db_name};"
+
+
+def execute_script_sql(script_path: str, db_name: str, connection_string: str) -> bool:
+    try:
+        with pyodbc.connect(
+            force_db_dans_conn_string(connection_string, db_name)
+        ) as db_conn:
+            with open(script_path, "r", encoding="utf-8") as file:
+                db_cursor = db_conn.cursor()
+                sql_script = file.read()
+                for batch in sql_script.split("GO"):
+                    batch = batch.strip()
+                    if batch:
+                        db_cursor.execute(batch)
+                db_conn.commit()
+                return True
+    except pyodbc.Error as e:
+        print(f"Erreur : {e}")
         return False
 
 
 def cree_database_et_tables(db_name: str, connection_string: str) -> bool:
     try:
-        # si la connection string comporte le nom de la DB, on remplace par 'master'
-        master_connection_string = connection_string.replace(
-            "DATABASE={db_name}", "DATABASE=master"
+        master_connection_string = force_db_dans_conn_string(
+            connection_string, "master"
         )
         db_existe = False
         with pyodbc.connect(master_connection_string, autocommit=True) as conn:
@@ -52,24 +90,29 @@ def cree_database_et_tables(db_name: str, connection_string: str) -> bool:
                 )  # Toujours utiliser les crochets !
                 print(f"Base {db_name} créée.")
 
-        if "DATABASE=" in connection_string:
-            db_connection_string = connection_string.replace(
-                "DATABASE={db_name}", f"DATABASE={db_name}"
-            )
-        else:
-            db_connection_string = f"{connection_string}DATABASE={db_name};"
-        with pyodbc.connect(db_connection_string) as db_conn:
-            with open(SCRIPT_CREATION_TOUTES_TABLES, "r", encoding="utf-8") as file:
-                db_cursor = db_conn.cursor()
-                sql_script = file.read()
-                for batch in sql_script.split("GO"):
-                    batch = batch.strip()
-                    if batch:
-                        db_cursor.execute(batch)
-
-                db_conn.commit()
-                return True
+        return execute_script_sql(
+            SCRIPT_CREATION_TOUTES_TABLES, db_name, connection_string
+        )
 
     except pyodbc.Error as e:
         print(f"Erreur : {e}")
+        return False
+
+
+def detruit_database(db_name: str, connection_string: str) -> bool:
+    master_connection_string = force_db_dans_conn_string(connection_string, "master")
+    try:
+        with pyodbc.connect(master_connection_string, autocommit=True) as conn:
+            cursor = conn.cursor()
+            cursor.execute(f"SELECT 1 FROM sys.databases WHERE name = '{db_name}'")
+            if cursor.fetchone():
+                # Ferme les connexions actives à la base (évite les erreurs)
+                cursor.execute(
+                    f"""
+                    ALTER DATABASE {db_name} SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
+                    DROP DATABASE {db_name};
+                """
+                )
+        return True
+    except pyodbc.Error as e:
         return False

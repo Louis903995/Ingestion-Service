@@ -26,6 +26,8 @@ class TicketEnteteCreate(TicketEnteteBase):
     Cette classe ne doit jamais être utilisée : les entêtes de ticket ne sont jamais modifiés.
     """
 
+
+class TicketEnteteUpdate(TicketEnteteBase):
     def __init__(self, *args, **kwargs):
         raise RuntimeError(
             "TicketEnteteUpdate ne doit jamais être instanciée (entêtes non modifiables)"

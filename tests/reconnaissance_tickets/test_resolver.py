@@ -4,8 +4,8 @@ import json
 from reconnaissance_tickets.model_ticket import TicketScanne
 from reconnaissance_tickets.resolver import extrait_ticket_scanne
 
-SOURCE = "tests/data/source"
-TARGET = "tests/data/expected"
+SOURCE = "tests/reconnaissance_tickets/data/source"
+TARGET = "tests/reconnaissance_tickets/data/expected"
 
 
 def load_test_cases():
