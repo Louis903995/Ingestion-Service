@@ -2,6 +2,8 @@ from sqlmodel import Session, select, func
 from api.models.ticket import (
     TicketEntete,
     TicketEnteteCreate,
+    TicketEnteteResponse,
+    TicketLigneResponse,
     TicketLignes,
     TicketLignesCreate,
 )
@@ -62,12 +64,12 @@ class TicketService:
         return db_ticket
 
     @staticmethod
-    def get_tickets_with_lignes_and_categorie_nom(
+    def get_tickets(
         session: Session,
         client_id: int,
         date_debut: Optional[datetime] = None,
         date_fin: Optional[datetime] = None,
-    ) -> List[Dict[str, Any]]:
+    ) -> List[TicketEnteteResponse]:
         # Filtre obligatoire sur client_id
         statement = select(TicketEntete).where(TicketEntete.client_id == client_id)
         if date_debut is not None:
@@ -85,26 +87,26 @@ class TicketService:
                 .where(TicketLignes.ticket_id == ticket.ticket_id)
             )
             lignes = session.exec(lignes_statement).all()
-            ticket_dict = {
-                "ticket_id": ticket.ticket_id,
-                "client_id": ticket.client_id,
-                "date_heure_ticket": ticket.date_heure_ticket.isoformat(),
-                "enseigne_id": ticket.enseigne_id,
-                "montant_total_ticket": ticket.montant_total_ticket,
-                "lignes": [
-                    {
-                        "ticket_ligne_id": getattr(ligne, "ticket_ligne_id", None),
-                        "libelle_produit": ligne.libelle_produit,
-                        "quantite": ligne.quantite,
-                        "categorie_produit_id": ligne.categorie_produit_id,
-                        "nom_categorie_produit": ligne.nom_categorie_produit,
-                        "prix_unitaire": ligne.prix_unitaire,
-                        "montant_total_ligne": ligne.montant_total_ligne,
-                    }
+            ticket_response = TicketEnteteResponse(
+                ticket_id=ticket.ticket_id,
+                client_id=ticket.client_id,
+                date_heure_ticket=ticket.date_heure_ticket.isoformat(),
+                enseigne_id=ticket.enseigne_id,
+                montant_total_ticket=ticket.montant_total_ticket,
+                lignes=[
+                    TicketLigneResponse(
+                        ticket_ligne_id=getattr(ligne, "ticket_ligne_id", None),
+                        libelle_produit=ligne.libelle_produit,
+                        quantite=ligne.quantite,
+                        categorie_produit_id=ligne.categorie_produit_id,
+                        nom_categorie_produit=ligne.nom_categorie_produit,
+                        prix_unitaire=ligne.prix_unitaire,
+                        montant_total_ligne=ligne.montant_total_ligne,
+                    )
                     for ligne in lignes
                 ],
-            }
-            results.append(ticket_dict)
+            )
+            results.append(ticket_response)
         return results
 
     @staticmethod

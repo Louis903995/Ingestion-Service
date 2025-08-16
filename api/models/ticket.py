@@ -1,6 +1,7 @@
 from typing import List, Optional
 from sqlmodel import Relationship, SQLModel, Field, Session, select
 from datetime import datetime
+from pydantic import BaseModel
 
 
 class TicketEnteteBase(SQLModel):
@@ -52,7 +53,7 @@ class TicketLignes(TicketLignesBase, table=True):
     categorie_produit_id: Optional[int] = Field(
         default=None, foreign_key="achats.ProduitCategories.categorie_produit_id"
     )
-    ticket: Optional["TicketEntete"] = Relationship(back_populates="lignes")    
+    ticket: Optional["TicketEntete"] = Relationship(back_populates="lignes")
     categorie: Optional["ProduitCategorie"] = Relationship(
         sa_relationship_kwargs={"lazy": "joined"}
     )
@@ -64,7 +65,6 @@ class TicketLignes(TicketLignesBase, table=True):
         if self.categorie is not None:
             return self.categorie.nom_categorie_produit
         return None
-
 
 
 class TicketLignesCreate(TicketLignesBase):
@@ -85,3 +85,22 @@ class TicketLignesUpdate(SQLModel):
 
 
 TicketLignes.model_rebuild()
+
+
+class TicketLigneResponse(BaseModel):
+    ticket_ligne_id: Optional[int]
+    libelle_produit: str
+    quantite: int
+    categorie_produit_id: Optional[int]
+    nom_categorie_produit: Optional[str]
+    prix_unitaire: Optional[float]
+    montant_total_ligne: Optional[float]
+
+
+class TicketEnteteResponse(BaseModel):
+    ticket_id: int
+    client_id: int
+    date_heure_ticket: str  # ou datetime selon ton besoin
+    enseigne_id: int
+    montant_total_ticket: float
+    lignes: List[TicketLigneResponse]
