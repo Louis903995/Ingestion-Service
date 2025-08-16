@@ -21,8 +21,10 @@ def test_get_all_enseignes():
 
 def test_get_all_tickets():
     with Session(engine) as session:
-        tickets = TicketService.get_ticket_with_lignes_and_categorie_nom(session, 1)
-        print(tickets)
+        # tickets = TicketService.get_ticket_with_lignes_and_categorie_nom(session, 1)
+        montant = TicketService.get_montant_total_par_categorie(session, 1, categorie_id=1)
+        # print(tickets)
+        print (montant)
 
 
 if __name__ == "__main__":

@@ -49,6 +49,9 @@ if TYPE_CHECKING:
 class TicketLignes(TicketLignesBase, table=True):
     ticket_ligne_id: Optional[int] = Field(default=None, primary_key=True)
     ticket_id: int = Field(foreign_key="achats.TicketEntetes.ticket_id")
+    categorie_produit_id: Optional[int] = Field(
+        default=None, foreign_key="achats.ProduitCategories.categorie_produit_id"
+    )
     ticket: Optional["TicketEntete"] = Relationship(back_populates="lignes")    
     categorie: Optional["ProduitCategorie"] = Relationship(
         sa_relationship_kwargs={"lazy": "joined"}
@@ -61,6 +64,7 @@ class TicketLignes(TicketLignesBase, table=True):
         if self.categorie is not None:
             return self.categorie.nom_categorie_produit
         return None
+
 
 
 class TicketLignesCreate(TicketLignesBase):

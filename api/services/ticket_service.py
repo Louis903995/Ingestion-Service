@@ -1,4 +1,4 @@
-from sqlmodel import Session, select
+from sqlmodel import Session, select, func
 from api.models.ticket import (
     TicketEntete,
     TicketEnteteCreate,
@@ -7,7 +7,7 @@ from api.models.ticket import (
 )
 from api.models.produit_categorie import ProduitCategorie
 from typing import Dict, Any, List, Optional
-
+from datetime import datetime
 from sqlalchemy.orm import selectinload
 
 # Exemple de JSON d'entrée pour la création :
@@ -34,6 +34,7 @@ from sqlalchemy.orm import selectinload
 #   ]
 # }
 
+
 class TicketService:
 
     @staticmethod
@@ -55,50 +56,89 @@ class TicketService:
             db_lignes.append(db_ligne_db)
         session.commit()
 
-        # Optionnel: rafraîchir les lignes pour avoir les relations
         for l in db_lignes:
             session.refresh(l)
 
         return db_ticket
 
     @staticmethod
-    def get_ticket_with_lignes_and_categorie_nom(
-        session: Session, ticket_id: int
-    ) -> Optional[Dict[str, Any]]:
-        statement = select(TicketEntete).where(TicketEntete.ticket_id == ticket_id)
-        ticket = session.exec(statement).one_or_none()
-        if ticket is None:
-            return None
+    def get_tickets_with_lignes_and_categorie_nom(
+        session: Session,
+        client_id: int,
+        date_debut: Optional[datetime] = None,
+        date_fin: Optional[datetime] = None,
+    ) -> List[Dict[str, Any]]:
+        # Filtre obligatoire sur client_id
+        statement = select(TicketEntete).where(TicketEntete.client_id == client_id)
+        if date_debut is not None:
+            statement = statement.where(TicketEntete.date_heure_ticket >= date_debut)
+        if date_fin is not None:
+            statement = statement.where(TicketEntete.date_heure_ticket <= date_fin)
 
-        # Lire toutes les lignes du ticket, charger la catégorie associée pour chaque ligne
-        lignes_statement = (
-            select(TicketLignes)
-            .options(selectinload(TicketLignes.categorie))
-            .where(TicketLignes.ticket_id == ticket_id)
+        tickets = session.exec(statement).all()
+        results = []
+
+        for ticket in tickets:
+            lignes_statement = (
+                select(TicketLignes)
+                .options(selectinload(TicketLignes.categorie))
+                .where(TicketLignes.ticket_id == ticket.ticket_id)
+            )
+            lignes = session.exec(lignes_statement).all()
+            ticket_dict = {
+                "ticket_id": ticket.ticket_id,
+                "client_id": ticket.client_id,
+                "date_heure_ticket": ticket.date_heure_ticket.isoformat(),
+                "enseigne_id": ticket.enseigne_id,
+                "montant_total_ticket": ticket.montant_total_ticket,
+                "lignes": [
+                    {
+                        "ticket_ligne_id": getattr(ligne, "ticket_ligne_id", None),
+                        "libelle_produit": ligne.libelle_produit,
+                        "quantite": ligne.quantite,
+                        "categorie_produit_id": ligne.categorie_produit_id,
+                        "nom_categorie_produit": ligne.nom_categorie_produit,
+                        "prix_unitaire": ligne.prix_unitaire,
+                        "montant_total_ligne": ligne.montant_total_ligne,
+                    }
+                    for ligne in lignes
+                ],
+            }
+            results.append(ticket_dict)
+        return results
+
+    @staticmethod
+    def get_montant_total_par_categorie(
+        session: Session,
+        client_id: int,
+        date_debut: Optional[datetime] = None,
+        date_fin: Optional[datetime] = None,
+        categorie_id: Optional[int] = None,
+    ) -> float:
+        # On sélectionne les entêtes de ticket du client sur la période
+        ticket_stmt = select(TicketEntete.ticket_id).where(
+            TicketEntete.client_id == client_id
         )
-        lignes = session.exec(lignes_statement).all()
+        if date_debut is not None:
+            ticket_stmt = ticket_stmt.where(
+                TicketEntete.date_heure_ticket >= date_debut
+            )
+        if date_fin is not None:
+            ticket_stmt = ticket_stmt.where(TicketEntete.date_heure_ticket <= date_fin)
+        ticket_ids = ticket_ids = [row for row in session.exec(ticket_stmt).all()]
+        if not ticket_ids:
+            return 0.0
 
-        # Construction du résultat
-        result = {
-            "ticket_id": ticket.ticket_id,
-            "client_id": ticket.client_id,
-            "date_heure_ticket": ticket.date_heure_ticket.isoformat(),
-            "enseigne_id": ticket.enseigne_id,
-            "montant_total_ticket": ticket.montant_total_ticket,
-            "lignes": [
-                {
-                    "ticket_ligne_id": getattr(ligne, "ticket_ligne_id", None),
-                    "libelle_produit": ligne.libelle_produit,
-                    "quantite": ligne.quantite,
-                    "categorie_produit_id": ligne.categorie_produit_id,
-                    "nom_categorie_produit": ligne.nom_categorie_produit,
-                    "prix_unitaire": ligne.prix_unitaire,
-                    "montant_total_ligne": ligne.montant_total_ligne,
-                }
-                for ligne in lignes
-            ],
-        }
-        return result
+        # On filtre les lignes de ticket correspondant aux tickets trouvés
+        ligne_stmt = select(func.sum(TicketLignes.montant_total_ligne))
+        ligne_stmt = ligne_stmt.where(TicketLignes.ticket_id.in_(ticket_ids))
+        if categorie_id is not None:
+            ligne_stmt = ligne_stmt.where(
+                TicketLignes.categorie_produit_id == categorie_id
+            )
+
+        montant_total = session.exec(ligne_stmt).one()
+        return montant_total or 0.0
 
 
 # # Exemple d'utilisation
