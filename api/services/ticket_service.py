@@ -7,53 +7,43 @@ from api.models.ticket import (
     TicketLignes,
     TicketLignesCreate,
 )
-from api.models.produit_categorie import ProduitCategorie
-from typing import Dict, Any, List, Optional
+from typing import List, Optional
 from datetime import datetime
 from sqlalchemy.orm import selectinload
-
-# Exemple de JSON d'entrée pour la création :
-# {
-#   "client_id": 1,
-#   "date_heure_ticket": "2025-08-16T09:30:00",
-#   "enseigne_id": 2,
-#   "montant_total_ticket": 99.99,
-#   "lignes": [
-#       {
-#           "libelle_produit": "Café",
-#           "quantite": 1,
-#           "categorie_produit_id": 3,
-#           "prix_unitaire": 2.0,
-#           "montant_total_ligne": 2
-#       },
-#       {
-#           "libelle_produit": "Croissant",
-#           "quantite": 2,
-#           "categorie_produit_id": 4,
-#           "prix_unitaire": 1.5,
-#           "montant_total_ligne": 3
-#       }
-#   ]
-# }
+from reconnaissance_tickets.model_ticket import TicketScanne
 
 
 class TicketService:
 
     @staticmethod
-    def create_ticket_with_lignes(
-        session: Session, ticket_data: Dict[str, Any]
+    def create_ticket_with_lignes_from_scan(
+        session: Session,
+        user_id: int,
+        ticket_scanne: TicketScanne,
     ) -> TicketEntete:
-        lignes_data = ticket_data.pop("lignes", [])
-        ticket_entete = TicketEnteteCreate(**ticket_data)
+        # Création de l'entête du ticket
+        ticket_entete = TicketEnteteCreate(
+            client_id=user_id,
+            date_heure_ticket=ticket_scanne.date_heure_ticket or datetime.utcnow(),
+            enseigne_id=None,  # À renseigner si tu as un mapping nom_enseigne -> id en base
+            montant_total_ticket=ticket_scanne.montant_total_ticket or 0.0,
+        )
         db_ticket = TicketEntete.model_validate(ticket_entete)
         session.add(db_ticket)
         session.commit()
         session.refresh(db_ticket)
 
         db_lignes = []
-        for ligne in lignes_data:
-            db_ligne = TicketLignesCreate(ticket_id=db_ticket.ticket_id, **ligne)
-            db_ligne_db = TicketLignes.model_validate(db_ligne)
+        for ligne in ticket_scanne.lignes:
+            ligne_create = TicketLignesCreate(
+                ticket_id=db_ticket.ticket_id,
+                libelle_produit=ligne.libelle_produit,
+                quantite=ligne.qte or 1,
+                prix_unitaire=ligne.pu,
+                montant_total_ligne=ligne.montant,
+                # Ajoute ici les mappings pour categorie_produit_id ou autres si besoin
+            )
+            db_ligne_db = TicketLignes.model_validate(ligne_create)
             session.add(db_ligne_db)
             db_lignes.append(db_ligne_db)
         session.commit()
@@ -141,41 +131,3 @@ class TicketService:
 
         montant_total = session.exec(ligne_stmt).one()
         return montant_total or 0.0
-
-
-# # Exemple d'utilisation
-# if __name__ == "__main__":
-#     from api.db import engine  # Adapte ce chemin selon ton projet
-
-#     # Exemple d'insertion
-#     ticket_json = {
-#         "client_id": 1,
-#         "date_heure_ticket": "2025-08-16T09:30:00",
-#         "enseigne_id": 2,
-#         "montant_total_ticket": 99.99,
-#         "lignes": [
-#             {
-#                 "libelle_produit": "Café",
-#                 "quantite": 1,
-#                 "categorie_produit_id": 3,
-#                 "prix_unitaire": 2.0,
-#                 "montant_total_ligne": 2,
-#             },
-#             {
-#                 "libelle_produit": "Croissant",
-#                 "quantite": 2,
-#                 "categorie_produit_id": 4,
-#                 "prix_unitaire": 1.5,
-#                 "montant_total_ligne": 3,
-#             },
-#         ],
-#     }
-#     with Session(engine) as session:
-#         ticket = create_ticket_with_lignes(session, ticket_json)
-#         print(f"Ticket créé, id: {ticket.ticket_id}")
-
-#         # Lecture avec les noms de catégories
-#         result = get_ticket_with_lignes_and_categorie_nom(session, ticket.ticket_id)
-#         from pprint import pprint
-
-#         pprint(result)
