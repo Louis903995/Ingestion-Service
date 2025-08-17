@@ -1,12 +1,13 @@
 import re
 
+from app.schemas.ticket_interprete import TicketInterprete
 from reconnaissance_tickets.enseignes.carrefour.commun import (
     interprete_lignes,
     isole_lignes_tableau,
     trouve_date_heure,
     trouve_tel_enseigne,
 )
-from reconnaissance_tickets.model_ticket import TicketInterprete
+
 
 
 def trouve_nom_enseigne_crf_market(texte: str) -> str | None:

@@ -8,8 +8,9 @@ from app.models.ticket import (
 from typing import List, Optional
 from datetime import datetime
 from sqlalchemy.orm import selectinload
+from app.schemas.ticket_interprete import TicketInterprete
 from app.schemas.ticket_reponse import TicketEnteteResponse, TicketLigneResponse
-from reconnaissance_tickets.model_ticket import TicketInterprete
+
 
 
 class TicketService:

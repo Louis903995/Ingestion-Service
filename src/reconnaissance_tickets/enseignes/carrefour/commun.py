@@ -1,11 +1,12 @@
 import re
 from datetime import datetime
 from typing import List
+from app.schemas.ticket_interprete import LigneTicketInterpretee
 from reconnaissance_tickets.extraction_fuzzy import (
     extraire_apres_pattern_flou,
     extraire_avant_pattern_flou,
 )
-from reconnaissance_tickets.model_ticket import LigneTicketInterpretee
+
 
 
 def trouve_tel_enseigne(texte: str) -> str | None:

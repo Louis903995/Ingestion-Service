@@ -3,7 +3,7 @@ import logging
 import pytest
 from datetime import datetime
 import pyodbc
-from reconnaissance_tickets.model_ticket import TicketInterprete, LigneTicketInterpretee
+from app.schemas.ticket_interprete import TicketInterprete
 from app.services.ticket_service import TicketService
 from tests.pyodbc_utils import execute_script_sql
 from tests.database.conftest import (

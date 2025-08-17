@@ -1,5 +1,6 @@
 import re
-from reconnaissance_tickets.model_ticket import TicketInterprete
+
+from app.schemas.ticket_interprete import TicketInterprete
 from reconnaissance_tickets.enseignes.carrefour.carrefour_city import (
     extrait_ticket_scanne as crf_city_extrait_ticket_scanne,
 )

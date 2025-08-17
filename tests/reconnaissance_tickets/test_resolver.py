@@ -1,7 +1,8 @@
 import pytest
 import os
 import json
-from reconnaissance_tickets.model_ticket import TicketInterprete
+
+from app.schemas.ticket_interprete import TicketInterprete
 from reconnaissance_tickets.resolver import extrait_ticket_scanne
 
 SOURCE = "tests/reconnaissance_tickets/data/source"

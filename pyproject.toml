@@ -23,8 +23,8 @@ export_requirements = "pdm export -o requirements.txt --without-hashes"
 build_docker_image = "bash -c 'VERSION=$(grep -oP \"version = \\\"\\K[^\\\"]+\" pyproject.toml); docker build -t ingestion-service:$VERSION -t ingestion-service:latest .'"
 build_docker = { composite = ["export_requirements", "build_docker_image"] }
 create_network = "docker network create mon-reseau"
-sql_server = "docker run -e \"ACCEPT_EULA=Y\" -e \"MSSQL_SA_PASSWORD=Password123\" -p 1433:1433 --name sql-server-dev --hostname sql-server-dev -d mcr.microsoft.com/mssql/server:2025-latest"
-container = "docker run --env-file .env -p 8000:8000 --name ingestion-service --network mon-reseau ingestion-service:latest"
+sql_server = "docker run -e \"ACCEPT_EULA=Y\" -e \"MSSQL_SA_PASSWORD=Password123\" -p 1433:1433 --name sql-server-dev --hostname sql-server-dev --network mon-reseau -d mcr.microsoft.com/mssql/server:2025-latest"
+container = "docker run --env-file .env.container.local -p 8000:8000 --name ingestion-service --network mon-reseau -d ingestion-service:latest"
 
 fastapi = "uvicorn app.main:app --reload"
 [dependency-groups]

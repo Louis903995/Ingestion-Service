@@ -1,6 +1,7 @@
 import logging
 import pyodbc
-from reconnaissance_tickets.model_ticket import TicketInterprete
+
+from app.schemas.ticket_interprete import TicketInterprete
 from tests.database.conftest import PYODBC_CONNECTION_STRING, DB_NAME_TEST
 
 logging.basicConfig(level=logging.INFO)
