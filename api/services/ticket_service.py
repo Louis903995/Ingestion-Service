@@ -8,7 +8,7 @@ from api.models.ticket import (
     TicketLignesCreate,
 )
 from typing import List, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy.orm import selectinload
 from reconnaissance_tickets.model_ticket import TicketScanne
 
@@ -16,42 +16,48 @@ from reconnaissance_tickets.model_ticket import TicketScanne
 class TicketService:
 
     @staticmethod
-    def create_ticket_with_lignes_from_scan(
+    def create_ticket(
         session: Session,
         user_id: int,
         ticket_scanne: TicketScanne,
-    ) -> TicketEntete:
-        # Création de l'entête du ticket
-        ticket_entete = TicketEnteteCreate(
-            client_id=user_id,
-            date_heure_ticket=ticket_scanne.date_heure_ticket or datetime.utcnow(),
-            enseigne_id=None,  # À renseigner si tu as un mapping nom_enseigne -> id en base
-            montant_total_ticket=ticket_scanne.montant_total_ticket or 0.0,
-        )
-        db_ticket = TicketEntete.model_validate(ticket_entete)
-        session.add(db_ticket)
-        session.commit()
-        session.refresh(db_ticket)
+    ) -> TicketEntete | None:
+        try:
 
-        db_lignes = []
-        for ligne in ticket_scanne.lignes:
-            ligne_create = TicketLignesCreate(
-                ticket_id=db_ticket.ticket_id,
-                libelle_produit=ligne.libelle_produit,
-                quantite=ligne.qte or 1,
-                prix_unitaire=ligne.pu,
-                montant_total_ligne=ligne.montant,
-                # Ajoute ici les mappings pour categorie_produit_id ou autres si besoin
+            # Création de l'entête du ticket
+            ticket_entete = TicketEnteteCreate(
+                client_id=user_id,
+                enseigne_id=ticket_scanne.enseigne_id,
+                date_heure_ticket=ticket_scanne.date_heure_ticket,
+                montant_total_ticket=ticket_scanne.montant_total_ticket,
             )
-            db_ligne_db = TicketLignes.model_validate(ligne_create)
-            session.add(db_ligne_db)
-            db_lignes.append(db_ligne_db)
-        session.commit()
+            db_ticket = TicketEntete.model_validate(ticket_entete)
+            session.add(db_ticket)
+            session.commit()
+            session.refresh(db_ticket)
 
-        for l in db_lignes:
-            session.refresh(l)
+            db_lignes = []
+            for ligne in ticket_scanne.lignes:
+                ligne_create = TicketLignesCreate(
+                    ticket_id=db_ticket.ticket_id,
+                    libelle_produit=ligne.libelle_produit,
+                    quantite=ligne.qte or 1,
+                    prix_unitaire=ligne.pu,
+                    montant_total_ligne=ligne.montant,
+                    # Ajoute ici les mappings pour categorie_produit_id ou autres si besoin
+                )
+                db_ligne_db = TicketLignes.model_validate(ligne_create)
+                session.add(db_ligne_db)
+                db_lignes.append(db_ligne_db)
+            session.commit()
 
-        return db_ticket
+            for l in db_lignes:
+                session.refresh(l)
+
+            return db_ticket
+        except Exception as e:
+            pass
+        # logger !
+        return None
 
     @staticmethod
     def get_tickets(

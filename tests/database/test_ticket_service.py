@@ -111,12 +111,11 @@ def simple_ticket_scanne():
     # )
 
 
-def test_create_ticket_with_lignes_from_scan(session, simple_ticket_scanne):
+def test_create_ticket(session, simple_ticket_scanne):
     user_id = 42
-    simple_ticket_scanne["enseigne_id"] = 1
-    ticket = TicketService.create_ticket_with_lignes_from_scan(
-        session, user_id, simple_ticket_scanne
-    )
+    simple_ticket_scanne.enseigne_id = 1
+    ticket = TicketService.create_ticket(session, user_id, simple_ticket_scanne)
+    print(ticket)
     # assert ticket.ticket_id is not None
     # assert ticket.client_id == user_id
     # assert ticket.montant_total_ticket == 12.5
@@ -132,7 +131,7 @@ def test_create_ticket_with_lignes_from_scan(session, simple_ticket_scanne):
 # def test_get_tickets(session, simple_ticket_scanne):
 #     user_id = 1
 #     # Ajoute un ticket
-#     TicketService.create_ticket_with_lignes_from_scan(
+#     TicketService.create_ticket(
 #         session, user_id, simple_ticket_scanne
 #     )
 
@@ -159,7 +158,7 @@ def test_create_ticket_with_lignes_from_scan(session, simple_ticket_scanne):
 
 # def test_get_montant_total_par_categorie(session, simple_ticket_scanne):
 #     user_id = 2
-#     TicketService.create_ticket_with_lignes_from_scan(
+#     TicketService.create_ticket(
 #         session, user_id, simple_ticket_scanne
 #     )
 

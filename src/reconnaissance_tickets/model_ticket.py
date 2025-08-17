@@ -5,16 +5,17 @@ from typing import List
 
 
 class LigneTicketScanne(BaseModel):
-    taux_tva: Optional[int]
-    libelle_produit: Optional[str]
-    qte: Optional[int]
-    pu: Optional[float]
-    montant: Optional[float]
+    taux_tva: Optional[int] = None
+    libelle_produit: Optional[str] = None
+    qte: Optional[int] = None
+    pu: Optional[float] = None
+    montant: Optional[float] = None
 
 
 class TicketScanne(BaseModel):
-    nom_enseigne: Optional[str]
-    tel_enseigne: Optional[str]
-    date_heure_ticket: Optional[datetime]
-    montant_total_ticket: Optional[float]
-    lignes: List[LigneTicketScanne]
+    nom_enseigne: Optional[str] = None
+    enseigne_id: Optional[int] = None
+    tel_enseigne: Optional[str] = None
+    date_heure_ticket: Optional[datetime] = None
+    montant_total_ticket: Optional[float] = None
+    lignes: List[LigneTicketScanne] = []

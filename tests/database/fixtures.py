@@ -45,7 +45,7 @@ def session():
         logger.critical(f"Impossible de créer les tables.")
         pytest.exit(f"Impossible de créer les tables.", returncode=1)
     engine = create_engine(
-        f"mssql+pyodbc://{USERNAME}:{PASSWORD}@{SERVER}:{PORT}/{DB_NAME_TEST}?driver={DRIVER.replace(' ', '+')}",
+        f"mssql+pyodbc://{USERNAME}:{PASSWORD}@{SERVER}:{PORT}/{DB_NAME_TEST}?driver={DRIVER.replace(' ', '+')}&TrustServerCertificate=yes",
         echo=True,
     )
     with Session(engine) as session:

@@ -2,7 +2,7 @@ from typing import List, Optional
 from sqlmodel import Relationship, SQLModel, Field, Session, select
 from datetime import datetime
 from pydantic import BaseModel
-
+from api.models.produit_categorie import ProduitCategorie
 
 class TicketEnteteBase(SQLModel):
     client_id: int
@@ -48,10 +48,7 @@ class TicketLignesBase(SQLModel):
     montant_total_ligne: int
 
 
-from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from api.models.produit_categorie import ProduitCategorie
 
 
 class TicketLignes(TicketLignesBase, table=True):
