@@ -2,6 +2,7 @@ import copy
 import logging
 import pytest
 from datetime import timedelta
+from api.models.ticket import TicketEnteteResponse, TicketLigneResponse
 from reconnaissance_tickets.model_ticket import TicketInterprete
 from api.services.ticket_service import TicketService
 from tests.database.pyodbc_tickets_utils import insere_ticket
@@ -64,25 +65,89 @@ def simple_ticket_interprete():
     )
 
 
+# compare 2 TicketEnteteResponse en ignorant leur ticket_ligne_id
+def compare_ignorant_ticket_ligne_id(
+    ticket_entete_rep1: TicketEnteteResponse,
+    ticket_entete_rep2: TicketEnteteResponse,
+) -> bool:
+    # fonction qui supprime les ticket_ligne_id
+    def supprime_ticket_ligne_ids(ticket_entete_rep: TicketEnteteResponse):
+        ticket = copy.deepcopy(ticket_entete_rep)
+        for ligne in ticket["lignes"]:
+            if "ticket_ligne_id" in ligne:
+                del ligne["ticket_ligne_id"]
+        return ticket
+
+    dump1 = supprime_ticket_ligne_ids(ticket_entete_rep1.model_dump())
+    dump2 = supprime_ticket_ligne_ids(ticket_entete_rep2.model_dump())
+    return dump1 == dump2
+
+
 def test_get_tickets(session, simple_ticket_interprete):
-    # on veut 3 copies différentes, pas 3 références sur le même objet
-    ticket_interprete_1 = copy.deepcopy(simple_ticket_interprete)
+    client_id = 1
+    insere_ticket(simple_ticket_interprete, client_id)
+    tickets = TicketService.get_tickets(session, client_id=client_id)
+    assert len(tickets) == 1
+    assert compare_ignorant_ticket_ligne_id(
+        tickets[0],
+        TicketEnteteResponse(
+            ticket_id=tickets[0].ticket_id,
+            client_id=client_id,
+            date_heure_ticket="2025-07-03T16:47:52",
+            enseigne_id=1,
+            montant_total_ticket=35.55,
+            lignes=[
+                TicketLigneResponse(
+                    ticket_ligne_id=1,
+                    libelle_produit="*100G NENTOS FESH H",
+                    quantite=4,
+                    categorie_produit_id=1,
+                    nom_categorie_produit="Fruits & légumes",
+                    prix_unitaire=3.54,
+                    montant_total_ligne=14.16,
+                ),
+                TicketLigneResponse(
+                    ticket_ligne_id=2,
+                    libelle_produit="*606G SORB CIT MX",
+                    quantite=1,
+                    categorie_produit_id=2,
+                    nom_categorie_produit="Viandes & poissons",
+                    prix_unitaire=None,
+                    montant_total_ligne=2.29,
+                ),
+                TicketLigneResponse(
+                    ticket_ligne_id=3,
+                    libelle_produit="*650G BAC POMME CHF",
+                    quantite=2,
+                    categorie_produit_id=2,
+                    nom_categorie_produit="Viandes & poissons",
+                    prix_unitaire=9.55,
+                    montant_total_ligne=19.1,
+                ),
+            ],
+        ),
+    )
 
-    ticket_interprete_2 = copy.deepcopy(simple_ticket_interprete)
-    ticket_interprete_2.date_heure_ticket = (
-        ticket_interprete_1.date_heure_ticket - timedelta(days=2)
-    )  # 2 jours avant
 
-    ticket_interprete_3 = copy.deepcopy(simple_ticket_interprete)
-    ticket_interprete_3.date_heure_ticket = (
-        ticket_interprete_1.date_heure_ticket + timedelta(days=2)
-    )  # 2 jours après
-    user_id = 1
+# def test_get_tickets(session, simple_ticket_interprete):
+#     # on veut 3 copies différentes, pas 3 références sur le même objet
+#     ticket_interprete_1 = copy.deepcopy(simple_ticket_interprete)
 
-    insere_ticket(ticket_interprete_1, user_id)
-    insere_ticket(ticket_interprete_2, user_id)
-    insere_ticket(ticket_interprete_3, user_id)
+#     ticket_interprete_2 = copy.deepcopy(simple_ticket_interprete)
+#     ticket_interprete_2.date_heure_ticket = (
+#         ticket_interprete_1.date_heure_ticket - timedelta(days=2)
+#     )  # 2 jours avant
 
-    tickets = TicketService.get_tickets(session, client_id=user_id)
-    assert len(tickets) == 3
-    print(tickets)
+#     ticket_interprete_3 = copy.deepcopy(simple_ticket_interprete)
+#     ticket_interprete_3.date_heure_ticket = (
+#         ticket_interprete_1.date_heure_ticket + timedelta(days=2)
+#     )  # 2 jours après
+#     client_id = 1
+
+#     insere_ticket(ticket_interprete_1, client_id)
+#     insere_ticket(ticket_interprete_2, client_id)
+#     insere_ticket(ticket_interprete_3, client_id)
+
+#     tickets = TicketService.get_tickets(session, client_id=client_id)
+#     assert len(tickets) == 3
+#     print(tickets)
