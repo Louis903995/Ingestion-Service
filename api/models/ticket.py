@@ -4,6 +4,7 @@ from datetime import datetime
 from pydantic import BaseModel
 from api.models.produit_categorie import ProduitCategorie
 
+
 class TicketEnteteBase(SQLModel):
     client_id: int
     date_heure_ticket: datetime
@@ -43,18 +44,15 @@ class TicketLignesBase(SQLModel):
     ticket_id: int
     libelle_produit: str
     quantite: int = 1
-    categorie_produit_id: Optional[int]
+    categorie_produit_id: int
     prix_unitaire: Optional[float] = None
-    montant_total_ligne: int
-
-
-
+    montant_total_ligne: float
 
 
 class TicketLignes(TicketLignesBase, table=True):
     ticket_ligne_id: Optional[int] = Field(default=None, primary_key=True)
     ticket_id: int = Field(foreign_key="achats.TicketEntetes.ticket_id")
-    categorie_produit_id: Optional[int] = Field(
+    categorie_produit_id: int = Field(
         default=None, foreign_key="achats.ProduitCategories.categorie_produit_id"
     )
     ticket: Optional["TicketEntete"] = Relationship(back_populates="lignes")

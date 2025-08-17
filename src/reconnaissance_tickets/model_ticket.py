@@ -7,7 +7,8 @@ from typing import List
 class LigneTicketScanne(BaseModel):
     taux_tva: Optional[int] = None
     libelle_produit: Optional[str] = None
-    qte: Optional[int] = None
+    qte: int = 1
+    categorie_produit_id: Optional[int] = None
     pu: Optional[float] = None
     montant: Optional[float] = None
 

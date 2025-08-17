@@ -40,10 +40,10 @@ class TicketService:
                 ligne_create = TicketLignesCreate(
                     ticket_id=db_ticket.ticket_id,
                     libelle_produit=ligne.libelle_produit,
-                    quantite=ligne.qte or 1,
+                    quantite=ligne.qte,
+                    categorie_produit_id= ligne.categorie_produit_id,
                     prix_unitaire=ligne.pu,
                     montant_total_ligne=ligne.montant,
-                    # Ajoute ici les mappings pour categorie_produit_id ou autres si besoin
                 )
                 db_ligne_db = TicketLignes.model_validate(ligne_create)
                 session.add(db_ligne_db)

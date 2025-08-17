@@ -61,35 +61,32 @@ def simple_ticket_scanne():
         "nom_enseigne": "MARKET BAISIEUX",
         "tel_enseigne": "03 20 41 94 28",
         "date_heure_ticket": "2025-07-03T16:47:52",
-        "montant_total_ticket": 0.0,
+        "montant_total_ticket": 10.0,
+        "enseigne_id": 1,
         "lignes": [
             {
                 "taux_tva": 7,
                 "libelle_produit": "*100G NENTOS FESH H",
                 "qte": 4,
                 "pu": 3.54,
-                "montant": 4.35
+                "montant": 4.35,
+                "categorie_produit_id": 1
             },
             {
                 "taux_tva": 6,
                 "libelle_produit": "*606G SORB CIT MX",
-                "qte": null,
+                "qte": 1,
                 "pu": null,
-                "montant": 2.29
+                "montant": 2.29,
+                "categorie_produit_id": 1
             },
             {
                 "taux_tva": 6,
                 "libelle_produit": "*650G BAC POMME CHF",
                 "qte": 2,
                 "pu": 9.55,
-                "montant": 2.49
-            },
-            {
-                "taux_tva": null,
-                "libelle_produit": "TOTAL ALIMENTAIRE",
-                "qte": null,
-                "pu": null,
-                "montant": 9.13
+                "montant": 2.49,
+                "categorie_produit_id": 1
             }
         ]
 }"""
@@ -113,7 +110,6 @@ def simple_ticket_scanne():
 
 def test_create_ticket(session, simple_ticket_scanne):
     user_id = 42
-    simple_ticket_scanne.enseigne_id = 1
     ticket = TicketService.create_ticket(session, user_id, simple_ticket_scanne)
     print(ticket)
     # assert ticket.ticket_id is not None
