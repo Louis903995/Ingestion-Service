@@ -15,7 +15,7 @@ load_env_file_to_environ()
 
 
 def interprete_image(base64_image: bytes) -> TicketInterprete | None:
-    MISTRAL_KEY = os.environ.get("MISTRAL-API-KEY")
+    MISTRAL_KEY = os.environ.get("MISTRAL_API_KEY")
     if MISTRAL_KEY:
         client = Mistral(api_key=MISTRAL_KEY)
         ocr_response = client.ocr.process(

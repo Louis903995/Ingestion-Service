@@ -1,8 +1,7 @@
 from typing import List, Optional
 from sqlmodel import Relationship, SQLModel, Field, Session, select
 from datetime import datetime
-from pydantic import BaseModel
-from api.models.produit_categorie import ProduitCategorie
+from app.models.produit_categorie import ProduitCategorie
 
 
 class TicketEnteteBase(SQLModel):
@@ -87,22 +86,3 @@ class TicketLignesUpdate(TicketLignesBase):
 
 
 TicketLignes.model_rebuild()
-
-
-class TicketLigneResponse(BaseModel):
-    ticket_ligne_id: Optional[int]
-    libelle_produit: str
-    quantite: int
-    categorie_produit_id: Optional[int]
-    nom_categorie_produit: Optional[str]
-    prix_unitaire: Optional[float]
-    montant_total_ligne: Optional[float]
-
-
-class TicketEnteteResponse(BaseModel):
-    ticket_id: int
-    client_id: int
-    date_heure_ticket: datetime
-    enseigne_id: int
-    montant_total_ticket: float
-    lignes: List[TicketLigneResponse]

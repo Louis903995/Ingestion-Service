@@ -1,15 +1,14 @@
 from sqlmodel import Session, select, func
-from api.models.ticket import (
+from app.models.ticket import (
     TicketEntete,
     TicketEnteteCreate,
-    TicketEnteteResponse,
-    TicketLigneResponse,
     TicketLignes,
     TicketLignesCreate,
 )
 from typing import List, Optional
-from datetime import datetime, timezone
+from datetime import datetime
 from sqlalchemy.orm import selectinload
+from app.schemas.ticket_reponse import TicketEnteteResponse, TicketLigneResponse
 from reconnaissance_tickets.model_ticket import TicketInterprete
 
 
@@ -41,7 +40,7 @@ class TicketService:
                     ticket_id=db_ticket.ticket_id,
                     libelle_produit=ligne.libelle_produit,
                     quantite=ligne.qte,
-                    categorie_produit_id= ligne.categorie_produit_id,
+                    categorie_produit_id=ligne.categorie_produit_id,
                     prix_unitaire=ligne.pu,
                     montant_total_ligne=ligne.montant,
                 )

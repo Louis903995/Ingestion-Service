@@ -2,9 +2,9 @@ import copy
 import logging
 import pytest
 from datetime import timedelta
-from api.models.ticket import TicketEnteteResponse, TicketLigneResponse
+from app.schemas.ticket_reponse import TicketEnteteResponse, TicketLigneResponse
 from reconnaissance_tickets.model_ticket import TicketInterprete
-from api.services.ticket_service import TicketService
+from app.services.ticket_service import TicketService
 from tests.database.pyodbc_tickets_utils import insere_ticket
 from tests.pyodbc_utils import execute_script_sql
 from tests.database.conftest import (

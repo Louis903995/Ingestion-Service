@@ -10,19 +10,17 @@ RUN apt-get update && apt-get install -y \
 # Installer le driver ODBC SQL Server
 RUN apt-get update && ACCEPT_EULA=Y apt-get install -y msodbcsql18
 
-# Créer le dossier src dans l'image
-RUN mkdir /src
+# Créer le dossier app dans l'image
+RUN mkdir /app
 
 # Copier requirements.txt et installer les packages Python
-COPY requirements.txt /src/
-RUN pip install --no-cache-dir -r /src/requirements.txt
+COPY requirements.txt /app/
+RUN pip install --no-cache-dir -r /app/requirements.txt
 
-# Copier tous les scripts Python dans /src/
-# COPY src/ /src/
-COPY tests/test_pyodbc_local.py /src/test.py
+COPY app/ /app/
 
-# Définir le dossier de travail par défaut
-WORKDIR /src
 
-# Par défaut, exécuter test.py (modifiable)
-CMD ["python", "test.py"]
+EXPOSE 8000
+
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# CMD ["tail", "-f", "/dev/null"]
