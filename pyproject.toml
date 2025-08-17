@@ -30,3 +30,7 @@ fastapi = "uvicorn app.main:app --reload"
 dev = [
     "pytest>=8.4.1",
 ]
+[tool.pytest.ini_options]
+filterwarnings = [
+    "ignore:Unrecognized server version info.*:sqlalchemy.exc.SAWarning"
+]

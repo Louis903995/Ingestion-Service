@@ -6,9 +6,8 @@ import pyodbc
 from reconnaissance_tickets.model_ticket import TicketInterprete, LigneTicketInterpretee
 from api.services.ticket_service import TicketService
 from tests.pyodbc_utils import execute_script_sql
-from tests.database.fixtures import (
-    session, # surtout ne pas oublier
-    nettoie_tout, # surtout ne pas oublier
+from tests.database.conftest import (
+    session,  # surtout ne pas oublier
     PYODBC_CONNECTION_STRING,
     DB_NAME_TEST,
 )

@@ -35,24 +35,26 @@ PYODBC_CONNECTION_STRING = get_connection_string(
 
 
 @pytest.fixture(scope="session", autouse=True)
-def session():
+def cree_database():
+    # Crée la base avant tout test
     if not is_sql_server_running(PYODBC_CONNECTION_STRING):
-        logger.critical(f"Impossible de trouver le server de base de données")
+        logger.critical("Impossible de trouver le serveur de base de données")
         pytest.exit(
-            f"SQL Server introuvable, le container est-il démarré?", returncode=1
+            "SQL Server introuvable, le container est-il démarré ?", returncode=1
         )
     if not cree_database_et_tables(DB_NAME_TEST, PYODBC_CONNECTION_STRING):
-        logger.critical(f"Impossible de créer les tables.")
-        pytest.exit(f"Impossible de créer les tables.", returncode=1)
+        logger.critical("Impossible de créer les tables.")
+        pytest.exit("Impossible de créer les tables.", returncode=1)
+    yield
+    detruit_database(DB_NAME_TEST, PYODBC_CONNECTION_STRING)
+
+
+@pytest.fixture(scope="function")
+def session(cree_database):
     engine = create_engine(
         f"mssql+pyodbc://{USERNAME}:{PASSWORD}@{SERVER}:{PORT}/{DB_NAME_TEST}?driver={DRIVER.replace(' ', '+')}&TrustServerCertificate=yes",
         echo=True,
+        future=True,
     )
     with Session(engine) as session:
         yield session
-
-
-@pytest.fixture(scope="session", autouse=True)
-def nettoie_tout():
-    yield
-    detruit_database(DB_NAME_TEST, PYODBC_CONNECTION_STRING)
