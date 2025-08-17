@@ -46,7 +46,7 @@ def cree_database():
         logger.critical("Impossible de créer les tables.")
         pytest.exit("Impossible de créer les tables.", returncode=1)
     yield
-    # detruit_database(DB_NAME_TEST, PYODBC_CONNECTION_STRING)
+    detruit_database(DB_NAME_TEST, PYODBC_CONNECTION_STRING)
 
 
 @pytest.fixture(scope="function")
