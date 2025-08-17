@@ -10,7 +10,7 @@ from api.models.ticket import (
 from typing import List, Optional
 from datetime import datetime, timezone
 from sqlalchemy.orm import selectinload
-from reconnaissance_tickets.model_ticket import TicketScanne
+from reconnaissance_tickets.model_ticket import TicketInterprete
 
 
 class TicketService:
@@ -19,7 +19,7 @@ class TicketService:
     def create_ticket(
         session: Session,
         user_id: int,
-        ticket_scanne: TicketScanne,
+        ticket_scanne: TicketInterprete,
     ) -> TicketEntete | None:
         try:
 

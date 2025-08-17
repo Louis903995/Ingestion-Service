@@ -5,7 +5,7 @@ from api.services.enseigne_service import EnseigneService
 from load_env import load_env_file_to_environ
 import os
 from mistralai import Mistral
-from reconnaissance_tickets.model_ticket import LigneTicketScanne, TicketScanne
+from reconnaissance_tickets.model_ticket import LigneTicketInterpretee, TicketInterprete
 from reconnaissance_tickets.resolver import extrait_ticket_scanne
 
 enseignes_dict = None
@@ -14,7 +14,7 @@ with Session(engine) as session:
 load_env_file_to_environ()
 
 
-def interprete_image(base64_image: bytes) -> TicketScanne | None:
+def interprete_image(base64_image: bytes) -> TicketInterprete | None:
     MISTRAL_KEY = os.environ.get("MISTRAL-API-KEY")
     if MISTRAL_KEY:
         client = Mistral(api_key=MISTRAL_KEY)
@@ -31,7 +31,7 @@ def interprete_image(base64_image: bytes) -> TicketScanne | None:
 
 # retrouve l'id de l'enseigne en fonction du nom d'enseigne scanné
 # et ajoute la propriété "id_enseigne" ainsi que la valeur de l'id
-def resoud_enseigne(ticket: TicketScanne) -> dict:
+def resoud_enseigne(ticket: TicketInterprete) -> dict:
     x = EnseigneService.trouve_enseigne_id(
         enseignes_dict, ticket.nom_enseigne, ticket.tel_enseigne
     )
@@ -41,13 +41,13 @@ def resoud_enseigne(ticket: TicketScanne) -> dict:
 
 # itere sur toutes les lignes du ticket et
 # ajoute la propriété "categorie_produit_id" lorsque elle est trouvée
-def categorise_produits(ticket: TicketScanne) -> dict:
+def categorise_produits(ticket: TicketInterprete) -> dict:
     return ticket
 
 
 # ajoute le nouvel entete dans la table "ticket_entete"
 # renvoie l'identifiant du ticket, None en cas d'erreur
-def write_ticket_entete(user_id, ticket: TicketScanne) -> int | None:
+def write_ticket_entete(user_id, ticket: TicketInterprete) -> int | None:
     return 1
 
 

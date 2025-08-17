@@ -6,7 +6,7 @@ from reconnaissance_tickets.enseignes.carrefour.commun import (
     trouve_date_heure,
     trouve_tel_enseigne,
 )
-from reconnaissance_tickets.model_ticket import TicketScanne
+from reconnaissance_tickets.model_ticket import TicketInterprete
 
 
 def trouve_nom_enseigne_crf_city(texte: str) -> str | None:
@@ -20,8 +20,8 @@ def trouve_nom_enseigne_crf_city(texte: str) -> str | None:
         return match.group(1).strip()
 
 
-def extrait_ticket_scanne(markdown: str) -> TicketScanne:
-    return TicketScanne(
+def extrait_ticket_scanne(markdown: str) -> TicketInterprete:
+    return TicketInterprete(
         nom_enseigne=trouve_nom_enseigne_crf_city(markdown),
         tel_enseigne=trouve_tel_enseigne(markdown),
         date_heure_ticket=trouve_date_heure(markdown),

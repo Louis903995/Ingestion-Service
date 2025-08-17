@@ -5,7 +5,7 @@ from reconnaissance_tickets.extraction_fuzzy import (
     extraire_apres_pattern_flou,
     extraire_avant_pattern_flou,
 )
-from reconnaissance_tickets.model_ticket import LigneTicketScanne
+from reconnaissance_tickets.model_ticket import LigneTicketInterpretee
 
 
 def trouve_tel_enseigne(texte: str) -> str | None:
@@ -45,7 +45,7 @@ def isole_lignes_tableau(texte: str) -> List[str]:
     return []
 
 
-def interprete_lignes(texte: str) -> List[LigneTicketScanne]:
+def interprete_lignes(texte: str) -> List[LigneTicketInterpretee]:
     pattern = re.compile(
         r"""
     ^\s*\|?\s*                 # Début ligne, pipe et espaces optionnels
@@ -92,7 +92,7 @@ def interprete_lignes(texte: str) -> List[LigneTicketScanne]:
             qte = None
             pu = None
         resultat.append(
-            LigneTicketScanne(
+            LigneTicketInterpretee(
                 taux_tva=taux_tva,
                 libelle_produit=libelle_produit,
                 qte=qte,

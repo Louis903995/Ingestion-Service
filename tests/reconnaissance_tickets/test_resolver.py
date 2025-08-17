@@ -1,7 +1,7 @@
 import pytest
 import os
 import json
-from reconnaissance_tickets.model_ticket import TicketScanne
+from reconnaissance_tickets.model_ticket import TicketInterprete
 from reconnaissance_tickets.resolver import extrait_ticket_scanne
 
 SOURCE = "tests/reconnaissance_tickets/data/source"
@@ -26,7 +26,7 @@ def load_test_cases():
         if jsonfile:
             try:
                 with open(os.path.join(TARGET, jsonfile), encoding="utf-8") as f:
-                    expected_TicketScanne = TicketScanne.model_validate_json(f.read())
+                    expected_TicketScanne = TicketInterprete.model_validate_json(f.read())
             except:
                 pass  # on ne fait rien, expected_TicketScanne est déjà à None
         cases.append((md_content, expected_TicketScanne))

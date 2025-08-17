@@ -18,7 +18,7 @@ from api.models.ticket import (
     TicketLignes,
     TicketLignesCreate,
 )
-from reconnaissance_tickets.model_ticket import TicketScanne, LigneTicketScanne
+from reconnaissance_tickets.model_ticket import TicketInterprete, LigneTicketInterpretee
 from api.services.ticket_service import TicketService
 from tests.pyodbc_utils import execute_script_sql
 
@@ -56,7 +56,7 @@ def setup_module():
 
 @pytest.fixture
 def simple_ticket_scanne():
-    return TicketScanne.model_validate_json(
+    return TicketInterprete.model_validate_json(
         """{
         "nom_enseigne": "MARKET BAISIEUX",
         "tel_enseigne": "03 20 41 94 28",
@@ -92,16 +92,16 @@ def simple_ticket_scanne():
 }"""
     )
 
-    # return TicketScanne(
+    # return TicketInterprete(
     #     nom_enseigne="Leclerc",
     #     tel_enseigne="0102030405",
     #     date_heure_ticket=datetime(2025, 8, 16, 9, 0),
     #     montant_total_ticket=12.5,
     #     lignes=[
-    #         LigneTicketScanne(
+    #         LigneTicketInterpretee(
     #             taux_tva=5, libelle_produit="Pain", qte=2, pu=1.0, montant=2.0
     #         ),
-    #         LigneTicketScanne(
+    #         LigneTicketInterpretee(
     #             taux_tva=20, libelle_produit="Vin", qte=1, pu=10.5, montant=10.5
     #         ),
     #     ],

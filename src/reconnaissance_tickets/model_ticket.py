@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from typing import List
 
 
-class LigneTicketScanne(BaseModel):
+class LigneTicketInterpretee(BaseModel):
     taux_tva: Optional[int] = None
     libelle_produit: Optional[str] = None
     qte: int = 1
@@ -13,10 +13,10 @@ class LigneTicketScanne(BaseModel):
     montant: Optional[float] = None
 
 
-class TicketScanne(BaseModel):
+class TicketInterprete(BaseModel):
     nom_enseigne: Optional[str] = None
     enseigne_id: Optional[int] = None
     tel_enseigne: Optional[str] = None
     date_heure_ticket: Optional[datetime] = None
     montant_total_ticket: Optional[float] = None
-    lignes: List[LigneTicketScanne] = []
+    lignes: List[LigneTicketInterpretee] = []
