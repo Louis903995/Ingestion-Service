@@ -98,7 +98,7 @@ def test_get_tickets(session, simple_ticket_interprete):
             montant_total_ticket=35.55,
             lignes=[
                 TicketLigneResponse(
-                    ticket_ligne_id=1,
+                    ticket_ligne_id=1,  # ignoré
                     libelle_produit="*100G NENTOS FESH H",
                     quantite=4,
                     categorie_produit_id=1,
@@ -107,7 +107,7 @@ def test_get_tickets(session, simple_ticket_interprete):
                     montant_total_ligne=14.16,
                 ),
                 TicketLigneResponse(
-                    ticket_ligne_id=2,
+                    ticket_ligne_id=2,  # ignoré
                     libelle_produit="*606G SORB CIT MX",
                     quantite=1,
                     categorie_produit_id=2,
@@ -116,7 +116,7 @@ def test_get_tickets(session, simple_ticket_interprete):
                     montant_total_ligne=2.29,
                 ),
                 TicketLigneResponse(
-                    ticket_ligne_id=3,
+                    ticket_ligne_id=3,  # ignoré
                     libelle_produit="*650G BAC POMME CHF",
                     quantite=2,
                     categorie_produit_id=2,
@@ -158,12 +158,12 @@ def test_get_tickets_a_partir_de(session, simple_ticket_interprete):
         TicketEnteteResponse(
             ticket_id=tickets[0].ticket_id,
             client_id=client_id,
-            date_heure_ticket=tickets[0].date_heure_ticket,
+            date_heure_ticket=ticket_interprete_2.date_heure_ticket,  # date du 2 eme ticket
             enseigne_id=1,
             montant_total_ticket=35.55,
             lignes=[
                 TicketLigneResponse(
-                    ticket_ligne_id=1,
+                    ticket_ligne_id=1,  # ignoré
                     libelle_produit="*100G NENTOS FESH H",
                     quantite=4,
                     categorie_produit_id=1,
@@ -172,7 +172,7 @@ def test_get_tickets_a_partir_de(session, simple_ticket_interprete):
                     montant_total_ligne=14.16,
                 ),
                 TicketLigneResponse(
-                    ticket_ligne_id=2,
+                    ticket_ligne_id=2,  # ignoré
                     libelle_produit="*606G SORB CIT MX",
                     quantite=1,
                     categorie_produit_id=2,
@@ -181,7 +181,7 @@ def test_get_tickets_a_partir_de(session, simple_ticket_interprete):
                     montant_total_ligne=2.29,
                 ),
                 TicketLigneResponse(
-                    ticket_ligne_id=3,
+                    ticket_ligne_id=3,  # ignoré
                     libelle_produit="*650G BAC POMME CHF",
                     quantite=2,
                     categorie_produit_id=2,
@@ -197,12 +197,12 @@ def test_get_tickets_a_partir_de(session, simple_ticket_interprete):
         TicketEnteteResponse(
             ticket_id=tickets[1].ticket_id,
             client_id=client_id,
-            date_heure_ticket=tickets[1].date_heure_ticket,
+            date_heure_ticket=ticket_interprete_3.date_heure_ticket,  # date du 3 eme ticket
             enseigne_id=1,
             montant_total_ticket=35.55,
             lignes=[
                 TicketLigneResponse(
-                    ticket_ligne_id=1,
+                    ticket_ligne_id=1,  # ignoré
                     libelle_produit="*100G NENTOS FESH H",
                     quantite=4,
                     categorie_produit_id=1,
@@ -211,7 +211,7 @@ def test_get_tickets_a_partir_de(session, simple_ticket_interprete):
                     montant_total_ligne=14.16,
                 ),
                 TicketLigneResponse(
-                    ticket_ligne_id=2,
+                    ticket_ligne_id=2,  # ignoré
                     libelle_produit="*606G SORB CIT MX",
                     quantite=1,
                     categorie_produit_id=2,
@@ -220,6 +220,110 @@ def test_get_tickets_a_partir_de(session, simple_ticket_interprete):
                     montant_total_ligne=2.29,
                 ),
                 TicketLigneResponse(
+                    ticket_ligne_id=3,  # ignoré
+                    libelle_produit="*650G BAC POMME CHF",
+                    quantite=2,
+                    categorie_produit_id=2,
+                    nom_categorie_produit="Viandes & poissons",
+                    prix_unitaire=9.55,
+                    montant_total_ligne=19.1,
+                ),
+            ],
+        ),
+    )
+
+
+def test_get_tickets_avant(session, simple_ticket_interprete):
+    # on veut 3 copies différentes, pas 3 références sur le même objet
+    ticket_interprete_1 = copy.deepcopy(simple_ticket_interprete)
+
+    ticket_interprete_2 = copy.deepcopy(simple_ticket_interprete)
+    ticket_interprete_2.date_heure_ticket = (
+        ticket_interprete_1.date_heure_ticket + timedelta(days=2)
+    )  # 2 jours après
+
+    ticket_interprete_3 = copy.deepcopy(simple_ticket_interprete)
+    ticket_interprete_3.date_heure_ticket = (
+        ticket_interprete_1.date_heure_ticket + timedelta(days=4)
+    )  # 4 jours après
+
+    client_id = 30
+
+    insere_ticket(ticket_interprete_1, client_id)
+    insere_ticket(ticket_interprete_2, client_id)
+    insere_ticket(ticket_interprete_3, client_id)
+
+    tickets = TicketService.get_tickets(
+        session, client_id=client_id, date_fin=ticket_interprete_2.date_heure_ticket
+    )
+    assert len(tickets) == 2
+    assert compare_ignorant_ticket_ligne_id(
+        tickets[0],
+        TicketEnteteResponse(
+            ticket_id=tickets[0].ticket_id,
+            client_id=client_id,
+            date_heure_ticket=ticket_interprete_1.date_heure_ticket,
+            enseigne_id=1,
+            montant_total_ticket=35.55,
+            lignes=[
+                TicketLigneResponse(
+                    ticket_ligne_id=1,  # ignoré
+                    libelle_produit="*100G NENTOS FESH H",
+                    quantite=4,
+                    categorie_produit_id=1,
+                    nom_categorie_produit="Fruits & légumes",
+                    prix_unitaire=3.54,
+                    montant_total_ligne=14.16,
+                ),
+                TicketLigneResponse(
+                    ticket_ligne_id=2,  # ignoré
+                    libelle_produit="*606G SORB CIT MX",
+                    quantite=1,
+                    categorie_produit_id=2,
+                    nom_categorie_produit="Viandes & poissons",
+                    prix_unitaire=None,
+                    montant_total_ligne=2.29,
+                ),
+                TicketLigneResponse(
+                    ticket_ligne_id=3,  # ignoré
+                    libelle_produit="*650G BAC POMME CHF",
+                    quantite=2,
+                    categorie_produit_id=2,
+                    nom_categorie_produit="Viandes & poissons",
+                    prix_unitaire=9.55,
+                    montant_total_ligne=19.1,
+                ),
+            ],
+        ),
+    )
+    assert compare_ignorant_ticket_ligne_id(
+        tickets[1],
+        TicketEnteteResponse(
+            ticket_id=tickets[1].ticket_id,
+            client_id=client_id,
+            date_heure_ticket=ticket_interprete_2.date_heure_ticket,
+            enseigne_id=1,
+            montant_total_ticket=35.55,
+            lignes=[
+                TicketLigneResponse(
+                    ticket_ligne_id=1,  # ignoré
+                    libelle_produit="*100G NENTOS FESH H",
+                    quantite=4,
+                    categorie_produit_id=1,
+                    nom_categorie_produit="Fruits & légumes",
+                    prix_unitaire=3.54,
+                    montant_total_ligne=14.16,
+                ),
+                TicketLigneResponse(
+                    ticket_ligne_id=2,  # ignoré
+                    libelle_produit="*606G SORB CIT MX",
+                    quantite=1,
+                    categorie_produit_id=2,
+                    nom_categorie_produit="Viandes & poissons",
+                    prix_unitaire=None,
+                    montant_total_ligne=2.29,
+                ),
+                TicketLigneResponse(  # ignoré
                     ticket_ligne_id=3,
                     libelle_produit="*650G BAC POMME CHF",
                     quantite=2,
