@@ -55,4 +55,4 @@ def session():
 @pytest.fixture(scope="session", autouse=True)
 def nettoie_tout():
     yield
-    # detruit_database(DB_NAME_TEST, PYODBC_CONNECTION_STRING)
+    detruit_database(DB_NAME_TEST, PYODBC_CONNECTION_STRING)
