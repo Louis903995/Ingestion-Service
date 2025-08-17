@@ -89,7 +89,7 @@ def interprete_lignes(texte: str) -> List[LigneTicketInterpretee]:
                     # on ne fait rien, on se contente de ce qu'on a réussi à récupérer
                     pass
         else:
-            qte = None
+            qte = 1
             pu = None
         resultat.append(
             LigneTicketInterpretee(

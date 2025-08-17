@@ -14,7 +14,7 @@
         {
             "taux_tva": 6,
             "libelle_produit": "*606G SORB CIT MX",
-            "qte": null,
+            "qte": 1,
             "pu": null,
             "montant": 2.29
         },
@@ -28,7 +28,7 @@
         {
             "taux_tva": null,
             "libelle_produit": "TOTAL ALIMENTAIRE",
-            "qte": null,
+            "qte": 1,
             "pu": null,
             "montant": 9.13
         }

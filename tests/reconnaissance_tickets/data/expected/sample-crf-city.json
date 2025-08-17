@@ -7,14 +7,14 @@
         {
             "taux_tva": 5,
             "libelle_produit": "*256G MAGN. MINI AM",
-            "qte": null,
+            "qte": 1,
             "pu": null,
             "montant": 4.6
         },
         {
             "taux_tva": 5,
             "libelle_produit": "*MINIPOT MACADAMIA",
-            "qte": null,
+            "qte": 1,
             "pu": null,
             "montant": 7.99
         }
