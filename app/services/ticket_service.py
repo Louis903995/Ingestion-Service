@@ -11,7 +11,7 @@ from datetime import datetime
 from sqlalchemy.orm import selectinload
 from app.schemas.ticket_interprete import TicketInterprete
 from app.schemas.ticket_reponse import TicketEnteteResponse, TicketLigneResponse
-from app.services.tickets.ingestion_ticket import interprete_image
+from app.services.tickets.ingestion_ticket import ingere_image
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -21,13 +21,13 @@ class TicketService:
     @staticmethod
     def create_ticket(
         session: Session,
-        user_id: int,
+        client_id: int,
         ticket_scanne: TicketInterprete,
     ) -> TicketEntete | None:
         try:
             # Création de l'entête du ticket
             ticket_entete = TicketEnteteCreate(
-                client_id=user_id,
+                client_id=client_id,
                 enseigne_id=ticket_scanne.enseigne_id,
                 date_heure_ticket=ticket_scanne.date_heure_ticket,
                 montant_total_ticket=ticket_scanne.montant_total_ticket,
@@ -140,7 +140,11 @@ class TicketService:
         return montant_total or 0.0
 
     @staticmethod
-    def ingere_image(user_id: int, base64_image: bytes) -> TicketEntete | None:
-        logger.info(f"{len(base64_image)}")
-        x = interprete_image(base64_image)
-        logger.info(x)
+    def ingere_image(
+        session: Session, client_id: int, base64_image: bytes
+    ) -> TicketEntete | None:
+        ticket_interprete = ingere_image(client_id, base64_image)
+        logger.info(ticket_interprete)
+        if ticket_interprete:
+            return TicketService.create_ticket(session, client_id, ticket_interprete)
+        return None

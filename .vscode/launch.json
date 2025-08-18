@@ -16,7 +16,6 @@
         "PYTHONPATH": "${workspaceFolder}"
       }
     },
-
     {
       "name": "FastAPI Debug (Uvicorn)",
       "type": "debugpy",

@@ -30,6 +30,7 @@ def create_ticket(
 async def upload_ticket_image(
     client_id: int,
     file: UploadFile = File(...),
+    session: Session = Depends(get_session),
 ):
     # on vérifie que le fichier est bien une image
     if not file.content_type.startswith("image/"):
@@ -37,7 +38,7 @@ async def upload_ticket_image(
             status_code=400, detail="Le fichier doit être une image (JPEG, PNG, etc.)."
         )
     base64_image = base64.b64encode(await file.read()).decode("utf-8")
-    ticket = TicketService.ingere_image(client_id, base64_image)
+    ticket = TicketService.ingere_image(session, client_id, base64_image)
     if not ticket:
         raise HTTPException(
             status_code=400, detail="Erreur lors de l'ingestion de l'image du ticket"

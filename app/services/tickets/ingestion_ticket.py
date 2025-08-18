@@ -46,14 +46,15 @@ def categorise_produits(ticket: TicketInterprete) -> dict:
 
 # ajoute le nouvel entete dans la table "ticket_entete"
 # renvoie l'identifiant du ticket, None en cas d'erreur
-def write_ticket_entete(user_id, ticket: TicketInterprete) -> int | None:
+def write_ticket_entete(client_id, ticket: TicketInterprete) -> int | None:
     return 1
 
 
 # analyse une image de ticket et le stocke dans les différentes tables en l'attachant au user id
 # renvoie l'id du ticket, None en cas d'erreur
-def ingere_image(user_id: int, base64_image: bytes) -> int | None:
+def ingere_image(client_id: int, base64_image: bytes) -> TicketInterprete | None:
     ticket_brut = interprete_image(base64_image)
-    ticket_categorise = categorise_produits(ticket_brut)
-    ticket_avec_enseigne = resoud_enseigne(ticket_categorise)
-    return write_ticket_entete(user_id, ticket_avec_enseigne)
+    # ticket_categorise = categorise_produits(ticket_brut)
+    # ticket_avec_enseigne = resoud_enseigne(ticket_categorise)
+    # return write_ticket_entete(client_id, ticket_avec_enseigne)
+    return ticket_brut

@@ -1,5 +1,5 @@
 git
-python > 3.12
+python >= 3.12
 pdm
 az cli
 Docker
