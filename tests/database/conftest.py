@@ -20,6 +20,9 @@ load_dotenv()
 DB_NAME = os.getenv("DB_NAME", "DB_TEST")
 DB_DRIVER = os.getenv("DB_DRIVER", "ODBC Driver 18 for SQL Server")
 DB_PORT = os.getenv("DB_PORT", 1433)
+TRUST_SERVER_CERTIFICATE = (
+    "yes" if os.getenv("TRUST_SERVER_CERTIFICATE", "no").lower() == "yes" else "no"
+)
 
 
 # docker run -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=Password123" -p 1433:1433 --name sql1 --hostname sql1 -d mcr.microsoft.com/mssql/server:2025-latest
@@ -29,7 +32,7 @@ PYODBC_CONNECTION_STRING = get_connection_string(
     DB_PORT,
     os.getenv("DB_USER"),
     os.getenv("DB_PASSWORD"),
-    trust_server_certificate=True,
+    trust_server_certificate=TRUST_SERVER_CERTIFICATE == "yes",
     encrypt=False,
 )
 
@@ -52,7 +55,7 @@ def cree_database():
 @pytest.fixture(scope="function")
 def session(cree_database):
     engine = create_engine(
-        f"mssql+pyodbc://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}@{os.getenv('DB_SERVER')}:{DB_PORT}/{DB_NAME}?driver={DB_DRIVER.replace(' ', '+')}&TrustServerCertificate=yes",
+        f"mssql+pyodbc://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}@{os.getenv('DB_SERVER')}:{DB_PORT}/{DB_NAME}?driver={DB_DRIVER.replace(' ', '+')}&TrustServerCertificate={TRUST_SERVER_CERTIFICATE}",
         echo=True,
         future=True,
     )

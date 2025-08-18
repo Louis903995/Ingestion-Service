@@ -1,21 +1,26 @@
 # db/database.py
+from dotenv import load_dotenv
 from sqlmodel import SQLModel, create_engine, Session
 import os
 
-SERVER = os.getenv("DB_SERVER")
+load_dotenv(dotenv_path=".env", override=False)
+
 PORT = os.getenv("DB_PORT", "1433")
-USERNAME = os.getenv("DB_USER")
-PASSWORD = os.getenv("DB_PASSWORD")
 DRIVER = os.getenv("DB_DRIVER", "ODBC Driver 18 for SQL Server")
-DB_NAME = os.getenv("DB_NAME")
+TRUST_SERVER_CERTIFICATE = (
+    "yes" if os.getenv("TRUST_SERVER_CERTIFICATE", "no").lower() == "yes" else "no"
+)
 
 DATABASE_URL = (
-    f"mssql+pyodbc://{USERNAME}:{PASSWORD}@{SERVER}:{PORT}/{DB_NAME}"
-    f"?driver={DRIVER.replace(' ', '+')}&TrustServerCertificate=yes"
+    f"mssql+pyodbc://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}@{os.getenv('DB_SERVER')}:{PORT}/{os.getenv('DB_NAME')}"
+    f"?driver={DRIVER.replace(' ', '+')}&TrustServerCertificate={TRUST_SERVER_CERTIFICATE}"
 )
 
 # Création de l'engine SQLModel
-engine = create_engine(DATABASE_URL, echo=True, future=True)
+try:
+    engine = create_engine(DATABASE_URL, echo=True, future=True)
+except Exception as e:
+    pass
 
 
 def create_db_and_tables():

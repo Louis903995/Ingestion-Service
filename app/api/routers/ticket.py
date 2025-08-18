@@ -34,9 +34,9 @@ def get_tickets(
     return TicketService.get_tickets(session, client_id, date_debut, date_fin)
 
 
-@router.get("/montant-total", response_model=float)
-def get_montant_total_par_categorie(
-    client_id: int = Query(...),
+@router.get("/clients/{client_id}/depenses", response_model=float)
+def get_depenses_par_categorie(
+    client_id: int,
     date_debut: Optional[str] = Query(None),
     date_fin: Optional[str] = Query(None),
     categorie_id: Optional[int] = Query(None),
