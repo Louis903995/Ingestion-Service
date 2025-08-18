@@ -1,6 +1,6 @@
 import os
 from mistralai import Mistral
-
+import requests
 import app.db.database
 from app.schemas.ticket_interprete import TicketInterprete
 from app.services.enseigne_service import EnseigneService
@@ -38,20 +38,32 @@ def resoud_enseigne(ticket: TicketInterprete) -> TicketInterprete:
 # itere sur toutes les lignes du ticket et
 # ajoute la propriété "categorie_produit_id" lorsque elle est trouvée
 def categorise_produits(ticket: TicketInterprete) -> TicketInterprete:
+    def resoud_categorie_id(produit_categorie):
+        for k in app.db.database.produit_categorie_dict:
+            if k.lower() == produit_categorie.lower():
+                return app.db.database.produit_categorie_dict.get(k)
+        return app.db.database.produit_categorie_dict["Aucune"]
+
+    payload = {"produits": [ligne.libelle_produit for ligne in ticket.lignes]}
+    response = requests.post(
+        f"{os.environ.get('CATEGORISATION_SERVICE_URL')}/predict",
+        json=payload,
+        headers={"Content-Type": "application/json"},
+    )
+    if response.status_code == 200:
+        predictions = response.json()["predictions"]
+        pred_dico = {item["produit"]: item["categorie"] for item in predictions}
+        for ligne in ticket.lignes:
+            produit_categorie = pred_dico[ligne.libelle_produit]
+            categorie_produit_id = resoud_categorie_id(produit_categorie)
+            ligne.categorie_produit_id = categorie_produit_id
     return ticket
-
-
-# ajoute le nouvel entete dans la table "ticket_entete"
-# renvoie l'identifiant du ticket, None en cas d'erreur
-def write_ticket_entete(client_id, ticket: TicketInterprete) -> int | None:
-    return 1
 
 
 # analyse une image de ticket et le stocke dans les différentes tables en l'attachant au user id
 # renvoie l'id du ticket, None en cas d'erreur
 def ingere_image(client_id: int, base64_image: bytes) -> TicketInterprete | None:
     ticket_brut = interprete_image(base64_image)
-    # ticket_categorise = categorise_produits(ticket_brut)
-    ticket_enrichi = resoud_enseigne(ticket_brut)
-    # return write_ticket_entete(client_id, ticket_avec_enseigne)
+    ticket_enrichi_intermediaire = categorise_produits(ticket_brut)
+    ticket_enrichi = resoud_enseigne(ticket_enrichi_intermediaire)
     return ticket_enrichi

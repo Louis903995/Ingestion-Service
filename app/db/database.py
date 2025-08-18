@@ -1,6 +1,4 @@
-# db/database.py
 import logging
-from dotenv import load_dotenv
 from sqlmodel import create_engine, Session
 import os
 
@@ -8,8 +6,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 enseignes_dict = None
-
-load_dotenv(dotenv_path=".env", override=False)
+produit_categorie_dict = None
 
 PORT = os.getenv("DB_PORT", "1433")
 DRIVER = os.getenv("DB_DRIVER", "ODBC Driver 18 for SQL Server")
