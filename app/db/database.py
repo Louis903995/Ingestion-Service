@@ -1,7 +1,11 @@
 # db/database.py
+import logging
 from dotenv import load_dotenv
 from sqlmodel import SQLModel, create_engine, Session
 import os
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 load_dotenv(dotenv_path=".env", override=False)
 
@@ -20,12 +24,12 @@ DATABASE_URL = (
 try:
     engine = create_engine(DATABASE_URL, echo=True, future=True)
 except Exception as e:
-    pass
+    logger.critical(f"Impossible de créer la db, {e}")
 
 
-def create_db_and_tables():
-    """Créer les tables à partir des modèles SQLModel"""
-    SQLModel.metadata.create_all(engine)
+# def create_db_and_tables():
+#     """Créer les tables à partir des modèles SQLModel"""
+#     SQLModel.metadata.create_all(engine)
 
 
 # Dependency à utiliser dans FastAPI (ou tes services)

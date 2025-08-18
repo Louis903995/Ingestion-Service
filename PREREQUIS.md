@@ -6,6 +6,8 @@ Docker
 Make
 odbc + driver mssql version 18
 
+plugin vscode MSSQL (optionel)
+
 (pdm lock si pdm.lock existe déjà)
 pdm install -G :all
 
