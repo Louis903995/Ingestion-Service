@@ -7,6 +7,8 @@ import os
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+enseignes_dict = None
+
 load_dotenv(dotenv_path=".env", override=False)
 
 PORT = os.getenv("DB_PORT", "1433")
@@ -21,15 +23,7 @@ DATABASE_URL = (
 )
 
 # Création de l'engine SQLModel
-try:
-    engine = create_engine(DATABASE_URL, echo=True, future=True)
-except Exception as e:
-    logger.critical(f"Impossible de créer la db, {e}")
-
-
-# def create_db_and_tables():
-#     """Créer les tables à partir des modèles SQLModel"""
-#     SQLModel.metadata.create_all(engine)
+engine = create_engine(DATABASE_URL, echo=True, future=True)
 
 
 # Dependency à utiliser dans FastAPI (ou tes services)

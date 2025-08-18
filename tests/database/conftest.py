@@ -4,7 +4,9 @@ import logging
 import os
 
 from sqlmodel import Session, create_engine
+from app.db.database import engine
 
+from app.services.enseigne_service import EnseigneService
 from tests.pyodbc_utils import (
     cree_database_et_tables,
     detruit_database,
@@ -35,6 +37,15 @@ PYODBC_CONNECTION_STRING = get_connection_string(
     trust_server_certificate=TRUST_SERVER_CERTIFICATE == "yes",
     encrypt=False,
 )
+
+
+# lit les val. d'Enseigne et les colle dans enseigne_dict au startup
+@pytest.fixture(autouse=True)
+def update_enseignes_dict():
+    import app.db.database
+    with Session(engine) as session:
+        app.db.database.enseignes_dict = EnseigneService.get_enseignes_dict(session)
+    yield
 
 
 @pytest.fixture(scope="session", autouse=True)

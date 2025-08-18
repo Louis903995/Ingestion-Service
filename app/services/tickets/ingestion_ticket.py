@@ -1,16 +1,10 @@
-from app.api.database import engine
-from sqlmodel import Session
-from app.schemas.ticket_interprete import TicketInterprete
-
 import os
 from mistralai import Mistral
 
+import app.db.database
+from app.schemas.ticket_interprete import TicketInterprete
 from app.services.enseigne_service import EnseigneService
 from app.services.tickets.reconnaissance_tickets.resolver import extrait_ticket_scanne
-
-enseignes_dict = None
-with Session(engine) as session:
-    enseignes_dict = EnseigneService.get_enseignes_dict(session)
 
 
 def interprete_image(base64_image: bytes) -> TicketInterprete | None:
@@ -32,7 +26,7 @@ def interprete_image(base64_image: bytes) -> TicketInterprete | None:
 # et ajoute la propriété "id_enseigne" ainsi que la valeur de l'id
 def resoud_enseigne(ticket: TicketInterprete) -> dict:
     x = EnseigneService.trouve_enseigne_id(
-        enseignes_dict, ticket.nom_enseigne, ticket.tel_enseigne
+        app.db.database.enseignes_dict, ticket.nom_enseigne, ticket.tel_enseigne
     )
     print(x)
     return ticket

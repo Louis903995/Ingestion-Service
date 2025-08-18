@@ -1,16 +1,19 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
-from app.api.routers import ticket
-
-# from app.db import create_db_and_tables  # Optionnel : création auto des tables
+from sqlmodel import Session
+from app.routers import ticket
+from app.services.enseigne_service import EnseigneService
+from app.db.database import engine
 
 app = FastAPI()
 
-# Inclure les routes de chaque module
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    global enseignes_dict
+    with Session(engine) as session:
+        enseignes_dict = EnseigneService.get_enseignes_dict(session)
+    yield
+
+
 app.include_router(ticket.router, tags=["Tickets"])
-# app.include_router(routes_enseigne.router, prefix="/enseignes", tags=["Enseignes"])
-
-# @app.on_event("startup")
-# def on_startup():
-#     create_db_and_tables()  # optionnel, pour créer les tables au démarrage
-
-# Si tu veux lancer avec : uvicorn app.main:app --reload
