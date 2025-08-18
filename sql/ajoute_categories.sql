@@ -1,6 +1,7 @@
 INSERT INTO achats.ProduitCategories
     (nom_categorie_produit)
 VALUES
+    (N'Aucune'),
     (N'Fruits & légumes'),
     (N'Viandes & poissons'),
     (N'Produits laitiers'),

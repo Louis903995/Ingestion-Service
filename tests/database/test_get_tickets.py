@@ -37,7 +37,7 @@ def simple_ticket_interprete() -> TicketInterprete:
                 "qte": 4,
                 "pu": 3.54,
                 "montant": 14.16,
-                "categorie_produit_id": 1
+                "categorie_produit_id": 2
             },
             {
                 "taux_tva": 6,
@@ -45,7 +45,7 @@ def simple_ticket_interprete() -> TicketInterprete:
                 "qte": 1,
                 "pu": null,
                 "montant": 2.29,
-                "categorie_produit_id": 2
+                "categorie_produit_id": 3
             },
             {
                 "taux_tva": 6,
@@ -53,7 +53,7 @@ def simple_ticket_interprete() -> TicketInterprete:
                 "qte": 2,
                 "pu": 9.55,
                 "montant": 19.1,
-                "categorie_produit_id": 2
+                "categorie_produit_id": 3
             }
         ]
 }"""
@@ -96,7 +96,7 @@ def test_get_tickets(session, simple_ticket_interprete):
                     ticket_ligne_id=1,  # ignoré
                     libelle_produit="*100G NENTOS FESH H",
                     quantite=4,
-                    categorie_produit_id=1,
+                    categorie_produit_id=2,
                     nom_categorie_produit="Fruits & légumes",
                     prix_unitaire=3.54,
                     montant_total_ligne=14.16,
@@ -105,7 +105,7 @@ def test_get_tickets(session, simple_ticket_interprete):
                     ticket_ligne_id=2,  # ignoré
                     libelle_produit="*606G SORB CIT MX",
                     quantite=1,
-                    categorie_produit_id=2,
+                    categorie_produit_id=3,
                     nom_categorie_produit="Viandes & poissons",
                     prix_unitaire=None,
                     montant_total_ligne=2.29,
@@ -114,7 +114,7 @@ def test_get_tickets(session, simple_ticket_interprete):
                     ticket_ligne_id=3,  # ignoré
                     libelle_produit="*650G BAC POMME CHF",
                     quantite=2,
-                    categorie_produit_id=2,
+                    categorie_produit_id=3,
                     nom_categorie_produit="Viandes & poissons",
                     prix_unitaire=9.55,
                     montant_total_ligne=19.1,
@@ -161,7 +161,7 @@ def test_get_tickets_a_partir_de(session, simple_ticket_interprete):
                     ticket_ligne_id=1,  # ignoré
                     libelle_produit="*100G NENTOS FESH H",
                     quantite=4,
-                    categorie_produit_id=1,
+                    categorie_produit_id=2,
                     nom_categorie_produit="Fruits & légumes",
                     prix_unitaire=3.54,
                     montant_total_ligne=14.16,
@@ -170,7 +170,7 @@ def test_get_tickets_a_partir_de(session, simple_ticket_interprete):
                     ticket_ligne_id=2,  # ignoré
                     libelle_produit="*606G SORB CIT MX",
                     quantite=1,
-                    categorie_produit_id=2,
+                    categorie_produit_id=3,
                     nom_categorie_produit="Viandes & poissons",
                     prix_unitaire=None,
                     montant_total_ligne=2.29,
@@ -179,7 +179,7 @@ def test_get_tickets_a_partir_de(session, simple_ticket_interprete):
                     ticket_ligne_id=3,  # ignoré
                     libelle_produit="*650G BAC POMME CHF",
                     quantite=2,
-                    categorie_produit_id=2,
+                    categorie_produit_id=3,
                     nom_categorie_produit="Viandes & poissons",
                     prix_unitaire=9.55,
                     montant_total_ligne=19.1,
@@ -200,7 +200,7 @@ def test_get_tickets_a_partir_de(session, simple_ticket_interprete):
                     ticket_ligne_id=1,  # ignoré
                     libelle_produit="*100G NENTOS FESH H",
                     quantite=4,
-                    categorie_produit_id=1,
+                    categorie_produit_id=2,
                     nom_categorie_produit="Fruits & légumes",
                     prix_unitaire=3.54,
                     montant_total_ligne=14.16,
@@ -209,7 +209,7 @@ def test_get_tickets_a_partir_de(session, simple_ticket_interprete):
                     ticket_ligne_id=2,  # ignoré
                     libelle_produit="*606G SORB CIT MX",
                     quantite=1,
-                    categorie_produit_id=2,
+                    categorie_produit_id=3,
                     nom_categorie_produit="Viandes & poissons",
                     prix_unitaire=None,
                     montant_total_ligne=2.29,
@@ -218,7 +218,7 @@ def test_get_tickets_a_partir_de(session, simple_ticket_interprete):
                     ticket_ligne_id=3,  # ignoré
                     libelle_produit="*650G BAC POMME CHF",
                     quantite=2,
-                    categorie_produit_id=2,
+                    categorie_produit_id=3,
                     nom_categorie_produit="Viandes & poissons",
                     prix_unitaire=9.55,
                     montant_total_ligne=19.1,
@@ -265,7 +265,7 @@ def test_get_tickets_avant(session, simple_ticket_interprete):
                     ticket_ligne_id=1,  # ignoré
                     libelle_produit="*100G NENTOS FESH H",
                     quantite=4,
-                    categorie_produit_id=1,
+                    categorie_produit_id=2,
                     nom_categorie_produit="Fruits & légumes",
                     prix_unitaire=3.54,
                     montant_total_ligne=14.16,
@@ -274,7 +274,7 @@ def test_get_tickets_avant(session, simple_ticket_interprete):
                     ticket_ligne_id=2,  # ignoré
                     libelle_produit="*606G SORB CIT MX",
                     quantite=1,
-                    categorie_produit_id=2,
+                    categorie_produit_id=3,
                     nom_categorie_produit="Viandes & poissons",
                     prix_unitaire=None,
                     montant_total_ligne=2.29,
@@ -283,7 +283,7 @@ def test_get_tickets_avant(session, simple_ticket_interprete):
                     ticket_ligne_id=3,  # ignoré
                     libelle_produit="*650G BAC POMME CHF",
                     quantite=2,
-                    categorie_produit_id=2,
+                    categorie_produit_id=3,
                     nom_categorie_produit="Viandes & poissons",
                     prix_unitaire=9.55,
                     montant_total_ligne=19.1,
@@ -304,7 +304,7 @@ def test_get_tickets_avant(session, simple_ticket_interprete):
                     ticket_ligne_id=1,  # ignoré
                     libelle_produit="*100G NENTOS FESH H",
                     quantite=4,
-                    categorie_produit_id=1,
+                    categorie_produit_id=2,
                     nom_categorie_produit="Fruits & légumes",
                     prix_unitaire=3.54,
                     montant_total_ligne=14.16,
@@ -313,7 +313,7 @@ def test_get_tickets_avant(session, simple_ticket_interprete):
                     ticket_ligne_id=2,  # ignoré
                     libelle_produit="*606G SORB CIT MX",
                     quantite=1,
-                    categorie_produit_id=2,
+                    categorie_produit_id=3,
                     nom_categorie_produit="Viandes & poissons",
                     prix_unitaire=None,
                     montant_total_ligne=2.29,
@@ -322,7 +322,7 @@ def test_get_tickets_avant(session, simple_ticket_interprete):
                     ticket_ligne_id=3,
                     libelle_produit="*650G BAC POMME CHF",
                     quantite=2,
-                    categorie_produit_id=2,
+                    categorie_produit_id=3,
                     nom_categorie_produit="Viandes & poissons",
                     prix_unitaire=9.55,
                     montant_total_ligne=19.1,
