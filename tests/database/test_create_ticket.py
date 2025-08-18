@@ -10,7 +10,6 @@ from tests.database.conftest import (
     PYODBC_CONNECTION_STRING,
     DB_NAME,
 )
-from app.db.database import enseignes_dict
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -63,10 +62,6 @@ def simple_ticket_interprete():
 
 def test_create_ticket(session, simple_ticket_interprete):
     user_id = 42
-    with open("toto.txt", "w") as f:
-        import json
-        import app
-        json.dump(app.db.database.enseignes_dict, f)
     ticket = TicketService.create_ticket(session, user_id, simple_ticket_interprete)
     ticket_id = ticket.ticket_id
     attendu = [
