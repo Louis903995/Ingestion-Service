@@ -140,7 +140,7 @@ class TicketService:
         return montant_total or 0.0
 
     @staticmethod
-    def ingestion_image(user_id: int, base64_image: bytes) -> TicketEntete | None:
+    def ingere_image(user_id: int, base64_image: bytes) -> TicketEntete | None:
         logger.info(f"{len(base64_image)}")
         x = interprete_image(base64_image)
         logger.info(x)

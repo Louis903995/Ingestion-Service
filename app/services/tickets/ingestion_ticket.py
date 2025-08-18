@@ -52,7 +52,7 @@ def write_ticket_entete(user_id, ticket: TicketInterprete) -> int | None:
 
 # analyse une image de ticket et le stocke dans les différentes tables en l'attachant au user id
 # renvoie l'id du ticket, None en cas d'erreur
-def ingestion_image(user_id: int, base64_image: bytes) -> int | None:
+def ingere_image(user_id: int, base64_image: bytes) -> int | None:
     ticket_brut = interprete_image(base64_image)
     ticket_categorise = categorise_produits(ticket_brut)
     ticket_avec_enseigne = resoud_enseigne(ticket_categorise)

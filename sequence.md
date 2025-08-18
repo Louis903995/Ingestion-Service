@@ -1,14 +1,14 @@
 ```mermaid
 sequenceDiagram
     participant U as Utilisateur
-    participant I as ingestion_image
+    participant I as ingere_image
     participant O as ocr
     participant R as resoud_enseigne
     participant C as categorise_produits
     participant WE as write_ticket_entete
     participant WL as write_ticket_ligne
 
-    U->>I: ingestion_image(user_id, image)
+    U->>I: ingere_image(user_id, image)
     I->>O: ocr(image)
     O-->>I: dict (entete + lignes)
     I->>R: resoud_enseigne(ticket)
