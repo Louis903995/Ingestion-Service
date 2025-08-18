@@ -20,6 +20,7 @@ help:
 	@echo "  clean   : Supprime les images locales"
 
 build:
+	pdm export -o requirements.txt --without-hashes
 	docker build -t $(IMAGE):$(VERSION) -t ingestion-service:latest .
 
 tag:

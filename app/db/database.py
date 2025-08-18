@@ -1,7 +1,7 @@
 # db/database.py
 import logging
 from dotenv import load_dotenv
-from sqlmodel import SQLModel, create_engine, Session
+from sqlmodel import create_engine, Session
 import os
 
 logging.basicConfig(level=logging.INFO)
