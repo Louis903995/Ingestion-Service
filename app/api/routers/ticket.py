@@ -10,13 +10,13 @@ from app.schemas.ticket_reponse import TicketEnteteResponse
 router = APIRouter()
 
 
-@router.post("/", response_model=TicketEnteteResponse)
+@router.post("/clients/{client_id}/tickets", response_model=TicketEnteteResponse)
 def create_ticket(
-    user_id: int,
+    client_id: int,
     ticket_scanne: TicketInterprete,
     session: Session = Depends(get_session),
 ):
-    ticket = TicketService.create_ticket(session, user_id, ticket_scanne)
+    ticket = TicketService.create_ticket(session, client_id, ticket_scanne)
     if not ticket:
         raise HTTPException(
             status_code=400, detail="Erreur lors de la création du ticket"
