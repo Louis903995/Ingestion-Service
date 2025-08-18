@@ -22,7 +22,7 @@ def setup_module():
 
 
 @pytest.fixture
-def simple_ticket_interprete():
+def simple_ticket_interprete() -> TicketInterprete:
     return TicketInterprete.model_validate_json(
         """{
         "nom_enseigne": "MARKET BAISIEUX",

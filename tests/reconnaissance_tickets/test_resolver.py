@@ -27,24 +27,24 @@ def load_test_cases():
     for mdfile, jsonfile in testfiles:
         with open(os.path.join(SOURCE, mdfile), encoding="utf-8") as f:
             md_content = f.read()
-        expected_TicketScanne = None
+        ticketScanne_attendu = None
         if jsonfile:
             try:
                 with open(os.path.join(TARGET, jsonfile), encoding="utf-8") as f:
-                    expected_TicketScanne = TicketInterprete.model_validate_json(
+                    ticketScanne_attendu = TicketInterprete.model_validate_json(
                         f.read()
                     )
             except Exception as e:
                 logger.error(e)
-                pass  # on ne fait rien, expected_TicketScanne est déjà à None
-        cases.append((md_content, expected_TicketScanne))
+                pass  # on ne fait rien, ticketScanne_attendu est déjà à None
+        cases.append((md_content, ticketScanne_attendu))
     return cases
 
 
-@pytest.mark.parametrize("markdown,expected_TicketScanne", load_test_cases())
-def test_extrait_ticket_scanne(markdown, expected_TicketScanne):
+@pytest.mark.parametrize("markdown,ticketScanne_attendu", load_test_cases())
+def test_extrait_ticket_scanne(markdown, ticketScanne_attendu):
     resultat = extrait_ticket_scanne(markdown)
-    if expected_TicketScanne is None:
+    if ticketScanne_attendu is None:
         assert resultat is None
     else:
-        assert resultat.model_dump() == expected_TicketScanne.model_dump()
+        assert resultat.model_dump() == ticketScanne_attendu.model_dump()

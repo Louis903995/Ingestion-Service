@@ -22,10 +22,6 @@ class TicketEntete(TicketEnteteBase, table=True):
 class TicketEnteteCreate(TicketEnteteBase):
     pass
 
-    """
-    Cette classe ne doit jamais être utilisée : les entêtes de ticket ne sont jamais modifiés.
-    """
-
 
 class TicketEnteteUpdate(TicketEnteteBase):
     pass
