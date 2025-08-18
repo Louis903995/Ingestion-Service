@@ -9,7 +9,7 @@ from tests.pyodbc_utils import execute_script_sql
 from tests.database.conftest import (
     session,  # surtout ne pas oublier
     PYODBC_CONNECTION_STRING,
-    DB_NAME_TEST,
+    DB_NAME,
 )
 
 
@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 @pytest.fixture(scope="session", autouse=True)
 def setup_module():
     execute_script_sql(
-        "sql/ajoute_categories.sql", DB_NAME_TEST, PYODBC_CONNECTION_STRING
+        "sql/ajoute_categories.sql", DB_NAME, PYODBC_CONNECTION_STRING
     )
     yield
 
@@ -123,8 +123,8 @@ def test_create_ticket(session, simple_ticket_interprete):
                     tl.categorie_produit_id,
                     tl.prix_unitaire,
                     tl.montant_total_ligne
-                FROM [{DB_NAME_TEST}].[achats].[TicketEntetes] AS te
-                INNER JOIN [{DB_NAME_TEST}].[achats].[TicketLignes] AS tl
+                FROM [{DB_NAME}].[achats].[TicketEntetes] AS te
+                INNER JOIN [{DB_NAME}].[achats].[TicketLignes] AS tl
                     ON te.ticket_id = tl.ticket_id
                 WHERE te.ticket_id = {ticket_id}
                 ORDER BY te.ticket_id, tl.ticket_ligne_id

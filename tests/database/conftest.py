@@ -1,5 +1,7 @@
+from dotenv import load_dotenv
 import pytest
 import logging
+import os
 
 from sqlmodel import Session, create_engine
 
@@ -13,22 +15,20 @@ from tests.pyodbc_utils import (
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+load_dotenv()
 
-SERVER = "localhost"
-PORT = 1433
-USERNAME = "SA"
-PASSWORD = "Password123"
-DRIVER = "ODBC Driver 18 for SQL Server"
-DB_NAME_TEST = "DB_TEST"
+DB_NAME = os.getenv("DB_NAME", "DB_TEST")
+DB_DRIVER = os.getenv("DB_DRIVER", "ODBC Driver 18 for SQL Server")
+DB_PORT = os.getenv("DB_PORT", 1433)
 
 
 # docker run -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=Password123" -p 1433:1433 --name sql1 --hostname sql1 -d mcr.microsoft.com/mssql/server:2025-latest
 PYODBC_CONNECTION_STRING = get_connection_string(
-    DRIVER,
-    SERVER,
-    PORT,
-    USERNAME,
-    PASSWORD,
+    DB_DRIVER,
+    os.getenv("DB_SERVER"),
+    DB_PORT,
+    os.getenv("DB_USER"),
+    os.getenv("DB_PASSWORD"),
     trust_server_certificate=True,
     encrypt=False,
 )
@@ -42,17 +42,17 @@ def cree_database():
         pytest.exit(
             "SQL Server introuvable, le container est-il démarré ?", returncode=1
         )
-    if not cree_database_et_tables(DB_NAME_TEST, PYODBC_CONNECTION_STRING):
+    if not cree_database_et_tables(os.getenv("DB_NAME"), PYODBC_CONNECTION_STRING):
         logger.critical("Impossible de créer les tables.")
         pytest.exit("Impossible de créer les tables.", returncode=1)
     yield
-    detruit_database(DB_NAME_TEST, PYODBC_CONNECTION_STRING)
+    detruit_database(os.getenv("DB_NAME"), PYODBC_CONNECTION_STRING)
 
 
 @pytest.fixture(scope="function")
 def session(cree_database):
     engine = create_engine(
-        f"mssql+pyodbc://{USERNAME}:{PASSWORD}@{SERVER}:{PORT}/{DB_NAME_TEST}?driver={DRIVER.replace(' ', '+')}&TrustServerCertificate=yes",
+        f"mssql+pyodbc://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}@{os.getenv('DB_SERVER')}:{DB_PORT}/{DB_NAME}?driver={DB_DRIVER.replace(' ', '+')}&TrustServerCertificate=yes",
         echo=True,
         future=True,
     )

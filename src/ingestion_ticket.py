@@ -3,7 +3,7 @@ from app.api.database import engine
 from sqlmodel import Session
 from app.api.services.enseigne_service import EnseigneService
 from app.schemas.ticket_interprete import TicketInterprete
-from load_env import load_env_file_to_environ
+
 import os
 from mistralai import Mistral
 
@@ -12,7 +12,7 @@ from reconnaissance_tickets.resolver import extrait_ticket_scanne
 enseignes_dict = None
 with Session(engine) as session:
     enseignes_dict = EnseigneService.get_enseignes_dict(session)
-load_env_file_to_environ()
+
 
 
 def interprete_image(base64_image: bytes) -> TicketInterprete | None:

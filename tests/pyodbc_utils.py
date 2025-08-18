@@ -1,6 +1,12 @@
+import logging
 import pyodbc
 import re
 import socket
+
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 
 SCRIPT_CREATION_TOUTES_TABLES = "sql/create_toutes_tables.sql"
 
@@ -17,8 +23,8 @@ def get_connection_string(
 ) -> str:
     return (
         f"DRIVER={{{driver}}};SERVER={server},{port};UID={username};PWD={password};"
-        f"TrustServerCertificate={"yes" if trust_server_certificate else "no"};"
-        f'Encrypt={"yes" if encrypt else "no" };'
+        f"TrustServerCertificate={'yes' if trust_server_certificate else 'no'};"
+        f"Encrypt={'yes' if encrypt else 'no'};"
         f"Connection Timeout={connection_timeout};"
     )
 
@@ -37,7 +43,8 @@ def is_sql_server_running(connection_string: str) -> bool:
             sock.connect((host, port))
             with pyodbc.connect(connection_string):
                 return True
-    except Exception:
+    except Exception as e:
+        logger.critical(f"Erreur : {e}")
         return False
 
 
@@ -64,7 +71,7 @@ def execute_script_sql(script_path: str, db_name: str, connection_string: str) -
                 db_conn.commit()
                 return True
     except pyodbc.Error as e:
-        print(f"Erreur : {e}")
+        logger.critical(f"Erreur : {e}")
         return False
 
 
@@ -95,7 +102,7 @@ def cree_database_et_tables(db_name: str, connection_string: str) -> bool:
         )
 
     except pyodbc.Error as e:
-        print(f"Erreur : {e}")
+        logger.critical(f"Erreur : {e}")
         return False
 
 
@@ -115,4 +122,5 @@ def detruit_database(db_name: str, connection_string: str) -> bool:
                 )
         return True
     except pyodbc.Error as e:
+        logger.critical(f"Erreur : {e}")
         return False

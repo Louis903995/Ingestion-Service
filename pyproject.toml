@@ -5,7 +5,7 @@ description = "Default template for PDM package"
 authors = [
     {name = "Louis903995", email = "louis@moises.fr"},
 ]
-dependencies = ["pyodbc>=5.2.0", "fastapi>=0.116.1", "uvicorn>=0.35.0", "sqlalchemy>=2.0.42", "pydantic>=2.11.7", "sqlmodel>=0.0.24", "mistralai>=1.9.3", "levenshtein>=0.27.1"]
+dependencies = ["pyodbc>=5.2.0", "fastapi>=0.116.1", "uvicorn>=0.35.0", "sqlalchemy>=2.0.42", "pydantic>=2.11.7", "sqlmodel>=0.0.24", "mistralai>=1.9.3", "levenshtein>=0.27.1", "python-dotenv>=1.1.1"]
 requires-python = ">=3.12"
 readme = "README.md"
 license = {text = "MIT"}
