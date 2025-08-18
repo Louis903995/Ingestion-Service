@@ -53,6 +53,8 @@ class EnseigneService:
         poids_nom: float = 0.8,
         poids_tel: float = 0.2,
     ) -> int | None:
+        if not enseignes:
+            return None
         best_score = -1
         best_id = None
         for k, (nom, tel) in enseignes.items():

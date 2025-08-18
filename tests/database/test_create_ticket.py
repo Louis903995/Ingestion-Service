@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 @pytest.fixture(scope="session", autouse=True)
 def setup_database():
     execute_script_sql("sql/ajoute_categories.sql", DB_NAME, PYODBC_CONNECTION_STRING)
+    execute_script_sql("sql/ajoute_enseignes.sql", DB_NAME, PYODBC_CONNECTION_STRING)
     yield
 
 

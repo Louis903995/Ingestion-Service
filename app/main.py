@@ -4,16 +4,13 @@ from sqlmodel import Session
 from app.routers import ticket
 from app.services.enseigne_service import EnseigneService
 from app.db.database import engine
-
-app = FastAPI()
-
+import app.db.database as db
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global enseignes_dict
     with Session(engine) as session:
-        enseignes_dict = EnseigneService.get_enseignes_dict(session)
+        db.enseignes_dict = EnseigneService.get_enseignes_dict(session)
     yield
 
-
+app = FastAPI(lifespan=lifespan)
 app.include_router(ticket.router, tags=["Tickets"])

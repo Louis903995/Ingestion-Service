@@ -24,17 +24,20 @@ def interprete_image(base64_image: bytes) -> TicketInterprete | None:
 
 # retrouve l'id de l'enseigne en fonction du nom d'enseigne scanné
 # et ajoute la propriété "id_enseigne" ainsi que la valeur de l'id
-def resoud_enseigne(ticket: TicketInterprete) -> dict:
-    x = EnseigneService.trouve_enseigne_id(
+def resoud_enseigne(ticket: TicketInterprete) -> TicketInterprete:
+    enseigne_id = EnseigneService.trouve_enseigne_id(
         app.db.database.enseignes_dict, ticket.nom_enseigne, ticket.tel_enseigne
     )
-    print(x)
+    if enseigne_id:
+        ticket.enseigne_id = enseigne_id
+    else:
+        pass  # on va monitorer
     return ticket
 
 
 # itere sur toutes les lignes du ticket et
 # ajoute la propriété "categorie_produit_id" lorsque elle est trouvée
-def categorise_produits(ticket: TicketInterprete) -> dict:
+def categorise_produits(ticket: TicketInterprete) -> TicketInterprete:
     return ticket
 
 
@@ -49,6 +52,6 @@ def write_ticket_entete(client_id, ticket: TicketInterprete) -> int | None:
 def ingere_image(client_id: int, base64_image: bytes) -> TicketInterprete | None:
     ticket_brut = interprete_image(base64_image)
     # ticket_categorise = categorise_produits(ticket_brut)
-    # ticket_avec_enseigne = resoud_enseigne(ticket_categorise)
+    ticket_enrichi = resoud_enseigne(ticket_brut)
     # return write_ticket_entete(client_id, ticket_avec_enseigne)
-    return ticket_brut
+    return ticket_enrichi
