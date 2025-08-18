@@ -1,18 +1,16 @@
-from datetime import datetime
 from app.api.database import engine
 from sqlmodel import Session
-from app.api.services.enseigne_service import EnseigneService
 from app.schemas.ticket_interprete import TicketInterprete
 
 import os
 from mistralai import Mistral
 
-from reconnaissance_tickets.resolver import extrait_ticket_scanne
+from app.services.enseigne_service import EnseigneService
+from app.services.tickets.reconnaissance_tickets.resolver import extrait_ticket_scanne
 
 enseignes_dict = None
 with Session(engine) as session:
     enseignes_dict = EnseigneService.get_enseignes_dict(session)
-
 
 
 def interprete_image(base64_image: bytes) -> TicketInterprete | None:

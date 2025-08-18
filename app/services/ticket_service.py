@@ -1,3 +1,4 @@
+import logging
 from sqlmodel import Session, select, func
 from app.models.ticket import (
     TicketEntete,
@@ -10,11 +11,13 @@ from datetime import datetime
 from sqlalchemy.orm import selectinload
 from app.schemas.ticket_interprete import TicketInterprete
 from app.schemas.ticket_reponse import TicketEnteteResponse, TicketLigneResponse
+from app.services.tickets.ingestion_ticket import interprete_image
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 class TicketService:
-
     @staticmethod
     def create_ticket(
         session: Session,
@@ -22,7 +25,6 @@ class TicketService:
         ticket_scanne: TicketInterprete,
     ) -> TicketEntete | None:
         try:
-
             # Création de l'entête du ticket
             ticket_entete = TicketEnteteCreate(
                 client_id=user_id,
@@ -50,13 +52,12 @@ class TicketService:
                 db_lignes.append(db_ligne_db)
             session.commit()
 
-            for l in db_lignes:
-                session.refresh(l)
+            for ligne in db_lignes:
+                session.refresh(ligne)
 
             return db_ticket
         except Exception as e:
-            pass
-        # logger !
+            logger.error(e)
         return None
 
     @staticmethod
@@ -137,3 +138,9 @@ class TicketService:
 
         montant_total = session.exec(ligne_stmt).one()
         return montant_total or 0.0
+
+    @staticmethod
+    def ingestion_image(user_id: int, base64_image: bytes) -> TicketEntete | None:
+        logger.info(f"{len(base64_image)}")
+        x = interprete_image(base64_image)
+        logger.info(x)

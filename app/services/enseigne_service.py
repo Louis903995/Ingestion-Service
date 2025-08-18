@@ -2,11 +2,10 @@ import Levenshtein
 from sqlmodel import Session, select
 from fastapi import HTTPException
 
-from api.models.enseigne import Enseigne, EnseigneCreate, EnseigneUpdate
+from app.models.enseigne import Enseigne, EnseigneCreate, EnseigneUpdate
 
 
 class EnseigneService:
-
     @staticmethod
     def get_all_enseignes(session: Session):
         return session.exec(select(Enseigne)).all()
@@ -52,7 +51,7 @@ class EnseigneService:
         num_tel_enseigne_ticket: str | None = None,
         seuil_score_global: float = 0.80,
         poids_nom: float = 0.8,
-        poids_tel: float = 0.2
+        poids_tel: float = 0.2,
     ) -> int | None:
         best_score = -1
         best_id = None

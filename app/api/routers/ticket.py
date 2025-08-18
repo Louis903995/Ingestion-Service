@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+import base64
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from sqlmodel import Session
 from typing import List, Optional
 
@@ -10,7 +11,8 @@ from app.schemas.ticket_reponse import TicketEnteteResponse
 router = APIRouter()
 
 
-@router.post("/clients/{client_id}/tickets", response_model=TicketEnteteResponse)
+# temporaire, juste pour les tests
+@router.post("/clients/{client_id}/tickets_tmp", response_model=TicketEnteteResponse)
 def create_ticket(
     client_id: int,
     ticket_scanne: TicketInterprete,
@@ -20,6 +22,25 @@ def create_ticket(
     if not ticket:
         raise HTTPException(
             status_code=400, detail="Erreur lors de la création du ticket"
+        )
+    return ticket
+
+
+@router.post("/clients/{client_id}/tickets", response_model=TicketEnteteResponse)
+async def upload_ticket_image(
+    client_id: int,
+    file: UploadFile = File(...),
+):
+    # on vérifie que le fichier est bien une image
+    if not file.content_type.startswith("image/"):
+        raise HTTPException(
+            status_code=400, detail="Le fichier doit être une image (JPEG, PNG, etc.)."
+        )
+    base64_image = base64.b64encode(await file.read()).decode("utf-8")
+    ticket = TicketService.ingestion_image(client_id, base64_image)
+    if not ticket:
+        raise HTTPException(
+            status_code=400, detail="Erreur lors de l'ingestion de l'image du ticket"
         )
     return ticket
 

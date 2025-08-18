@@ -1,4 +1,4 @@
-from ingestion_ticket import ingestion_image
+from app.services.tickets.ingestion_ticket import ingestion_image
 import base64
 
 

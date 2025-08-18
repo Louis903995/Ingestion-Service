@@ -1,4 +1,4 @@
-curl -X POST "http://localhost:8000/clients/123/tickets" \
+curl -X POST "http://localhost:8000/clients/123/tickets_tmp" \
 -H "Content-Type: application/json" \
 -d '{
     "nom_enseigne": "Supermarché X",
@@ -25,3 +25,9 @@ curl -X POST "http://localhost:8000/clients/123/tickets" \
         }
     ]
 }'
+
+
+curl -X POST "http://localhost:8000/clients/123/tickets" \
+  -H "accept: application/json" \
+  -H "Content-Type: multipart/form-data" \
+  -F "file=@images/carrefour_city_1.jpg"
