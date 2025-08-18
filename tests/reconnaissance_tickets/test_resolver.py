@@ -1,9 +1,13 @@
+import logging
 import pytest
 import os
-import json
 
 from app.schemas.ticket_interprete import TicketInterprete
-from reconnaissance_tickets.resolver import extrait_ticket_scanne
+from app.services.tickets.reconnaissance_tickets.resolver import extrait_ticket_scanne
+
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 SOURCE = "tests/reconnaissance_tickets/data/source"
 TARGET = "tests/reconnaissance_tickets/data/expected"
@@ -27,8 +31,11 @@ def load_test_cases():
         if jsonfile:
             try:
                 with open(os.path.join(TARGET, jsonfile), encoding="utf-8") as f:
-                    expected_TicketScanne = TicketInterprete.model_validate_json(f.read())
-            except:
+                    expected_TicketScanne = TicketInterprete.model_validate_json(
+                        f.read()
+                    )
+            except Exception as e:
+                logger.error(e)
                 pass  # on ne fait rien, expected_TicketScanne est déjà à None
         cases.append((md_content, expected_TicketScanne))
     return cases

@@ -7,21 +7,17 @@ from app.schemas.ticket_interprete import TicketInterprete
 from app.services.ticket_service import TicketService
 from tests.pyodbc_utils import execute_script_sql
 from tests.database.conftest import (
-    session,  # surtout ne pas oublier
     PYODBC_CONNECTION_STRING,
     DB_NAME,
 )
-
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
 @pytest.fixture(scope="session", autouse=True)
-def setup_module():
-    execute_script_sql(
-        "sql/ajoute_categories.sql", DB_NAME, PYODBC_CONNECTION_STRING
-    )
+def setup_database():
+    execute_script_sql("sql/ajoute_categories.sql", DB_NAME, PYODBC_CONNECTION_STRING)
     yield
 
 
@@ -66,9 +62,7 @@ def simple_ticket_interprete():
 
 def test_create_ticket(session, simple_ticket_interprete):
     user_id = 42
-    # on enregistre le ticket
     ticket = TicketService.create_ticket(session, user_id, simple_ticket_interprete)
-    # on récupère le ticket_id du ticket qu'on vient d'enregistrer
     ticket_id = ticket.ticket_id
     attendu = [
         (
@@ -130,11 +124,10 @@ def test_create_ticket(session, simple_ticket_interprete):
                 ORDER BY te.ticket_id, tl.ticket_ligne_id
                 """
             cursor.execute(query)
-            # on force resultat comme une liste de tuple car sinon c'est un pydobc.row
-            # et la comparaison avec attendu (liste de tuple) sera toujours fausse
             resultat = [tuple(row) for row in cursor.fetchall()]
             assert list(resultat) == attendu
     except AssertionError:
-        raise  # On laisse passer l'AssertionError, elle remonte sinon notre test passe dans tous les cas
+        raise
     except Exception as e:
         logger.critical(e)
+        raise

@@ -8,11 +8,7 @@ from app.schemas.ticket_reponse import TicketEnteteResponse, TicketLigneResponse
 from app.services.ticket_service import TicketService
 from tests.database.pyodbc_tickets_utils import insere_ticket
 from tests.pyodbc_utils import execute_script_sql
-from tests.database.conftest import (
-    # session,  # surtout ne pas oublier
-    PYODBC_CONNECTION_STRING,
-    DB_NAME,
-)
+from tests.database.conftest import PYODBC_CONNECTION_STRING, DB_NAME
 
 
 logging.basicConfig(level=logging.INFO)
@@ -21,9 +17,7 @@ logger = logging.getLogger(__name__)
 
 @pytest.fixture(scope="session", autouse=True)
 def setup_module():
-    execute_script_sql(
-        "sql/ajoute_categories.sql", DB_NAME, PYODBC_CONNECTION_STRING
-    )
+    execute_script_sql("sql/ajoute_categories.sql", DB_NAME, PYODBC_CONNECTION_STRING)
     yield
 
 
