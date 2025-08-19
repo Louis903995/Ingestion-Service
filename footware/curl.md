@@ -30,4 +30,9 @@ curl -X POST "http://localhost:8000/clients/123/tickets_tmp" \
 curl -X POST "http://localhost:8000/clients/123/tickets" \
   -H "accept: application/json" \
   -H "Content-Type: multipart/form-data" \
-  -F "file=@images/carrefour_city_1.jpg"
+  -F "file=@tests/reconnaissance_tickets/data/source/carrefour_city_1.jpg"
+
+  curl -X POST "https://ingestion-service.politesky-11b41c05.westeurope.azurecontainerapps.io/clients/123/tickets" \
+  -H "accept: application/json" \
+  -H "Content-Type: multipart/form-data" \
+  -F "file=@tests/reconnaissance_tickets/data/source/carrefour_city_1.jpg"

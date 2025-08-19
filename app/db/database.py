@@ -1,6 +1,15 @@
 import logging
 from sqlmodel import create_engine, Session
-import os
+
+from app.config import (
+    get_db_driver,
+    get_db_name,
+    get_db_password,
+    get_db_port,
+    get_db_server,
+    get_db_user,
+    get_trust_server_certificate,
+)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -8,19 +17,25 @@ logger = logging.getLogger(__name__)
 enseignes_dict = None
 produit_categorie_dict = None
 
-PORT = os.getenv("DB_PORT", "1433")
-DRIVER = os.getenv("DB_DRIVER", "ODBC Driver 18 for SQL Server")
-TRUST_SERVER_CERTIFICATE = (
-    "yes" if os.getenv("TRUST_SERVER_CERTIFICATE", "no").lower() == "yes" else "no"
-)
 
-DATABASE_URL = (
-    f"mssql+pyodbc://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}@{os.getenv('DB_SERVER')}:{PORT}/{os.getenv('DB_NAME')}"
-    f"?driver={DRIVER.replace(' ', '+')}&TrustServerCertificate={TRUST_SERVER_CERTIFICATE}"
-)
+def construit_database_url():
+    user = get_db_user()
+    password = get_db_password()
+    server = get_db_server()
+    port = get_db_port()
+    dbname = get_db_name()
+    driver = get_db_driver()
+    trust = get_trust_server_certificate()
+    return (
+        f"mssql+pyodbc://{user}:{password}@{server}:{port}/{dbname}"
+        f"?driver={driver.replace(' ', '+')}&TrustServerCertificate={trust}"
+    )
+
+
+DATABASE_URL = construit_database_url()
 
 # Création de l'engine SQLModel
-engine = create_engine(DATABASE_URL, echo=True, future=True)
+engine = create_engine(DATABASE_URL, echo=False, future=True)
 
 
 # Dependency à utiliser dans FastAPI (ou tes services)

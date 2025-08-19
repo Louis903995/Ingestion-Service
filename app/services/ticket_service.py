@@ -1,5 +1,6 @@
 import logging
 from sqlmodel import Session, select, func
+from app.metrics import COMPTEUR_TOTAL_INGESTIONS_TICKET
 from app.models.ticket import (
     TicketEntete,
     TicketEnteteCreate,
@@ -144,7 +145,8 @@ class TicketService:
         session: Session, client_id: int, base64_image: bytes
     ) -> TicketEntete | None:
         ticket_interprete = ingere_image(client_id, base64_image)
-        logger.info(ticket_interprete)
         if ticket_interprete:
+            COMPTEUR_TOTAL_INGESTIONS_TICKET.add(1, {"status": "Succes"})
             return TicketService.create_ticket(session, client_id, ticket_interprete)
+        COMPTEUR_TOTAL_INGESTIONS_TICKET.add(1, {"status": "Echec"})
         return None
