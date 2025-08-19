@@ -34,15 +34,17 @@ def interprete_image(base64_image: bytes) -> TicketInterprete | None:
 # retrouve l'id de l'enseigne en fonction du nom d'enseigne scanné
 # et ajoute la propriété "id_enseigne" ainsi que la valeur de l'id
 def resoud_enseigne(ticket: TicketInterprete) -> TicketInterprete | None:
-    enseigne_id = EnseigneService.trouve_enseigne_id(
-        app.db.database.enseignes_dict, ticket.nom_enseigne, ticket.tel_enseigne
-    )
-    if enseigne_id:
-        ticket.enseigne_id = enseigne_id
-        return ticket
-    else:
-        logger.warning("Impossible de trouver une correspondance d'enseigne")
-
+    try:
+        enseigne_id = EnseigneService.trouve_enseigne_id(
+            app.db.database.enseignes_dict, ticket.nom_enseigne, ticket.tel_enseigne
+        )
+        if enseigne_id:
+            ticket.enseigne_id = enseigne_id
+            return ticket
+        else:
+            logger.warning("Impossible de trouver une correspondance d'enseigne")
+    except Exception as e:
+        logger.error(e)
 
 # itere sur toutes les lignes du ticket et
 # ajoute la propriété "categorie_produit_id" lorsque elle est trouvée
@@ -80,12 +82,14 @@ def ingere_image(client_id: int, base64_image: bytes) -> TicketInterprete | None
     if not ticket_brut:
         COMPTEUR_INGESTIONS_TICKET_ERREUR.add(1, {"cause": "OCR impossible"})
     else:
+        logger.info("ticket transformé en markdown.")
         ticket_enrichi_intermediaire = categorise_produits(ticket_brut)
         if not ticket_enrichi_intermediaire:
             COMPTEUR_INGESTIONS_TICKET_ERREUR.add(
                 1, {"cause": "Categorisation produit impossible"}
             )
         else:
+            logger.info("produits tous catégorisés.")
             ticket_enrichi = resoud_enseigne(ticket_enrichi_intermediaire)
             if not ticket_enrichi:
                 COMPTEUR_INGESTIONS_TICKET_ERREUR.add(
