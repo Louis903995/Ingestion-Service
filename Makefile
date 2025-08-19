@@ -21,7 +21,7 @@ help:
 
 build:
 	pdm export -o requirements.txt --without-hashes
-	docker build -t $(IMAGE):$(VERSION) -t ingestion-service:latest .
+	docker build -t $(IMAGE):$(VERSION) -t $(IMAGE):latest .
 
 tag:
 	docker tag $(IMAGE):$(VERSION) $(TAG)
