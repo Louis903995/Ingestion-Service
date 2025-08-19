@@ -1,23 +1,25 @@
 from dotenv import load_dotenv
-import pytest
-import logging
-import os
 
-from sqlmodel import Session, create_engine
-from app.db.database import engine
+load_dotenv()  # exceptionnel pour charger .env avant toutes autre opération
 
-from app.services.enseigne_service import EnseigneService
-from tests.pyodbc_utils import (
+import pytest  # noqa: E402
+import logging  # noqa: E402
+import os  # noqa: E402
+
+from sqlmodel import Session, create_engine  # noqa: E402
+from app.db.database import engine  # noqa: E402
+
+from app.services.enseigne_service import EnseigneService  # noqa: E402
+from tests.pyodbc_utils import (  # noqa: E402
     cree_database_et_tables,
     detruit_database,
+    execute_script_sql,
     get_connection_string,
     is_sql_server_running,
 )
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-load_dotenv()
 
 DB_NAME = os.getenv("DB_NAME", "DB_TEST")
 DB_DRIVER = os.getenv("DB_DRIVER", "ODBC Driver 18 for SQL Server")
@@ -39,10 +41,22 @@ PYODBC_CONNECTION_STRING = get_connection_string(
 )
 
 
+@pytest.fixture(scope="session", autouse=True)
+def setup_database():
+    execute_script_sql(
+        "tests/database/sql/ajoute_categories.sql", DB_NAME, PYODBC_CONNECTION_STRING
+    )
+    execute_script_sql(
+        "tests/database/sql/ajoute_enseignes.sql", DB_NAME, PYODBC_CONNECTION_STRING
+    )
+    yield
+
+
 # lit les val. d'Enseigne et les colle dans enseigne_dict au startup
 @pytest.fixture(autouse=True)
 def update_enseignes_dict():
     import app.db.database
+
     with Session(engine) as session:
         app.db.database.enseignes_dict = EnseigneService.get_enseignes_dict(session)
     yield

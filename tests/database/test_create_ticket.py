@@ -5,7 +5,6 @@ from datetime import datetime
 import pyodbc
 from app.schemas.ticket_interprete import TicketInterprete
 from app.services.ticket_service import TicketService
-from tests.pyodbc_utils import execute_script_sql
 from tests.database.conftest import (
     PYODBC_CONNECTION_STRING,
     DB_NAME,
@@ -13,13 +12,6 @@ from tests.database.conftest import (
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-
-@pytest.fixture(scope="session", autouse=True)
-def setup_database():
-    execute_script_sql("sql/ajoute_categories.sql", DB_NAME, PYODBC_CONNECTION_STRING)
-    execute_script_sql("sql/ajoute_enseignes.sql", DB_NAME, PYODBC_CONNECTION_STRING)
-    yield
 
 
 @pytest.fixture

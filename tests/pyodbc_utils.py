@@ -8,7 +8,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-SCRIPT_CREATION_TOUTES_TABLES = "sql/create_toutes_tables.sql"
+SCRIPT_CREATION_TOUTES_TABLES = "tests/database/sql/create_toutes_tables.sql"
 
 
 def get_connection_string(
