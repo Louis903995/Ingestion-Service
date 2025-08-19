@@ -5,6 +5,7 @@ RG=RG-SIMPLON-CERTIF
 IMAGE = ingestion-service
 VERSION = $(shell grep -oP 'version = "\K[^"]+' $(PYPROJECT))
 TAG = $(REGISTRY)/$(IMAGE):$(VERSION)
+PORT = 8000
 
 # Commandes
 .PHONY: help build tag push login deploy test clean
@@ -38,7 +39,7 @@ create-container:
 		--resource-group $(RG) \
 		--image $(REGISTRY)/$(IMAGE):$(VERSION) \
 		--environment cae-simplon-certif \
-		--target-port 8000 \
+		--target-port $(PORT) \
 		--ingress external \
 		--registry-server $(REGISTRY) \
 		--user-assigned "id-simplon-certif-acr-deployer" \
