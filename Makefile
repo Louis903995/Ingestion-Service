@@ -51,6 +51,8 @@ deploy-app:
 		--resource-group $(RG) \
 		--image $(REGISTRY)/$(IMAGE):$(VERSION)
 
+create: build tag login push create-container
+
 deploy: build tag login push deploy-app
 
 test:
