@@ -2,6 +2,7 @@ from typing import List, Optional
 from sqlmodel import Relationship, SQLModel, Field, Session, select
 from datetime import datetime
 from app.models.produit_categorie import ProduitCategorie
+from app.models.enseigne import Enseigne
 
 
 class TicketEnteteBase(SQLModel):
@@ -14,9 +15,19 @@ class TicketEnteteBase(SQLModel):
 class TicketEntete(TicketEnteteBase, table=True):
     ticket_id: Optional[int] = Field(default=None, primary_key=True)
     lignes: List["TicketLignes"] = Relationship(back_populates="ticket")
+    enseigne_id: int = Field(foreign_key="achats.Enseignes.enseigne_id")
+    enseigne: Optional["Enseigne"] = Relationship(
+        sa_relationship_kwargs={"lazy": "joined"}
+    )
 
     __tablename__ = "TicketEntetes"
     __table_args__ = {"schema": "achats"}
+
+    @property
+    def enseigne_nom(self) -> Optional[str]:
+        if self.enseigne is not None:
+            return self.enseigne.enseigne_nom
+        return None
 
 
 class TicketEnteteCreate(TicketEnteteBase):

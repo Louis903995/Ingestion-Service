@@ -69,7 +69,11 @@ class TicketService:
         date_fin: Optional[datetime] = None,
     ) -> List[TicketEnteteResponse]:
         # Filtre obligatoire sur client_id
-        statement = select(TicketEntete).where(TicketEntete.client_id == client_id)
+        statement = (
+            select(TicketEntete)
+            .where(TicketEntete.client_id == client_id)
+            .options(selectinload(TicketEntete.enseigne))
+        )
         if date_debut is not None:
             statement = statement.where(TicketEntete.date_heure_ticket >= date_debut)
         if date_fin is not None:

@@ -1,809 +1,1174 @@
-===== tests/__init__.py =====
+===== app/services/produit_categorie_service.py =====
+from sqlmodel import Session, select
+from fastapi import HTTPException
 
-===== tests/ingestion_ticketTest.py =====
-from app.services.tickets.ingestion_ticket import ingere_image
-import base64
-
-
-def encode_image(image_path: str) -> bytes | None:
-    """Encode the image to base64."""
-    try:
-        with open(image_path, "rb") as image_file:
-            return base64.b64encode(image_file.read()).decode("utf-8")
-    except FileNotFoundError:
-        print(f"Error: The file {image_path} was not found.")
-        return None
-    except Exception as e:
-        print(f"Error: {e}")
-        return None
+from app.models.produit_categorie import ProduitCategorie
 
 
-image_path = "images/carrefour_city_1.jpg"
-image_path = "images/carrefour_market_1.jpeg"
-base64_image = encode_image(image_path)
+class ProduitCategorieService:
+    @staticmethod
+    def get_all_produit_categories(session: Session):
+        return session.exec(select(ProduitCategorie)).all()
 
-resultat = ingere_image(1, base64_image)
-print(resultat)
+    @staticmethod
+    def get_produit_categorie_by_id(session: Session, produit_categorie_id: int):
+        produit_categorie = session.get(ProduitCategorie, produit_categorie_id)
+        if not produit_categorie:
+            raise HTTPException(status_code=404, detail="Categorie produit non trouvée")
+        return produit_categorie
 
-===== tests/database/test_get_tickets.py =====
-import copy
-import logging
-import pytest
-from datetime import timedelta
-from app.schemas.ticket_interprete import TicketInterprete
-from app.schemas.ticket_reponse import TicketEnteteResponse, TicketLigneResponse
-
-from app.services.ticket_service import TicketService
-from tests.database.pyodbc_tickets_utils import insere_ticket
-
-
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-
-@pytest.fixture
-def simple_ticket_interprete() -> TicketInterprete:
-    return TicketInterprete.model_validate_json(
-        """{
-        "nom_enseigne": "MARKET BAISIEUX",
-        "tel_enseigne": "03 20 41 94 28",
-        "date_heure_ticket": "2025-07-03T16:47:52",
-        "montant_total_ticket": 35.55,
-        "enseigne_id": 1,
-        "lignes": [
-            {
-                "taux_tva": 7,
-                "libelle_produit": "*100G NENTOS FESH H",
-                "qte": 4,
-                "pu": 3.54,
-                "montant": 14.16,
-                "categorie_produit_id": 2
-            },
-            {
-                "taux_tva": 6,
-                "libelle_produit": "*606G SORB CIT MX",
-                "qte": 1,
-                "pu": null,
-                "montant": 2.29,
-                "categorie_produit_id": 3
-            },
-            {
-                "taux_tva": 6,
-                "libelle_produit": "*650G BAC POMME CHF",
-                "qte": 2,
-                "pu": 9.55,
-                "montant": 19.1,
-                "categorie_produit_id": 3
-            }
-        ]
-}"""
-    )
-
-
-# compare 2 TicketEnteteResponse en ignorant leur ticket_ligne_id
-def compare_ignorant_ticket_ligne_id(
-    ticket_entete_rep1: TicketEnteteResponse,
-    ticket_entete_rep2: TicketEnteteResponse,
-) -> bool:
-    # fonction qui supprime les ticket_ligne_id
-    def supprime_ticket_ligne_ids(ticket_entete_rep: TicketEnteteResponse):
-        ticket = copy.deepcopy(ticket_entete_rep)
-        for ligne in ticket["lignes"]:
-            if "ticket_ligne_id" in ligne:
-                del ligne["ticket_ligne_id"]
-        return ticket
-
-    dump1 = supprime_ticket_ligne_ids(ticket_entete_rep1.model_dump())
-    dump2 = supprime_ticket_ligne_ids(ticket_entete_rep2.model_dump())
-    return dump1 == dump2
-
-
-def test_get_tickets(session, simple_ticket_interprete):
-    client_id = 10
-    insere_ticket(simple_ticket_interprete, client_id)
-    tickets = TicketService.get_tickets(session, client_id=client_id)
-    assert len(tickets) == 1
-    assert compare_ignorant_ticket_ligne_id(
-        tickets[0],
-        TicketEnteteResponse(
-            ticket_id=tickets[0].ticket_id,
-            client_id=client_id,
-            date_heure_ticket="2025-07-03T16:47:52",
-            enseigne_id=1,
-            montant_total_ticket=35.55,
-            lignes=[
-                TicketLigneResponse(
-                    ticket_ligne_id=1,  # ignoré
-                    libelle_produit="*100G NENTOS FESH H",
-                    quantite=4,
-                    categorie_produit_id=2,
-                    nom_categorie_produit="Fruits & légumes",
-                    prix_unitaire=3.54,
-                    montant_total_ligne=14.16,
-                ),
-                TicketLigneResponse(
-                    ticket_ligne_id=2,  # ignoré
-                    libelle_produit="*606G SORB CIT MX",
-                    quantite=1,
-                    categorie_produit_id=3,
-                    nom_categorie_produit="Viandes & poissons",
-                    prix_unitaire=None,
-                    montant_total_ligne=2.29,
-                ),
-                TicketLigneResponse(
-                    ticket_ligne_id=3,  # ignoré
-                    libelle_produit="*650G BAC POMME CHF",
-                    quantite=2,
-                    categorie_produit_id=3,
-                    nom_categorie_produit="Viandes & poissons",
-                    prix_unitaire=9.55,
-                    montant_total_ligne=19.1,
-                ),
-            ],
-        ),
-    )
-
-
-def test_get_tickets_a_partir_de(session, simple_ticket_interprete):
-    # on veut 3 copies différentes, pas 3 références sur le même objet
-    ticket_interprete_1 = copy.deepcopy(simple_ticket_interprete)
-
-    ticket_interprete_2 = copy.deepcopy(simple_ticket_interprete)
-    ticket_interprete_2.date_heure_ticket = (
-        ticket_interprete_1.date_heure_ticket + timedelta(days=2)
-    )  # 2 jours après
-
-    ticket_interprete_3 = copy.deepcopy(simple_ticket_interprete)
-    ticket_interprete_3.date_heure_ticket = (
-        ticket_interprete_1.date_heure_ticket + timedelta(days=4)
-    )  # 4 jours après
-
-    client_id = 20
-
-    insere_ticket(ticket_interprete_1, client_id)
-    insere_ticket(ticket_interprete_2, client_id)
-    insere_ticket(ticket_interprete_3, client_id)
-
-    tickets = TicketService.get_tickets(
-        session, client_id=client_id, date_debut=ticket_interprete_2.date_heure_ticket
-    )
-    assert len(tickets) == 2
-    assert compare_ignorant_ticket_ligne_id(
-        tickets[0],
-        TicketEnteteResponse(
-            ticket_id=tickets[0].ticket_id,
-            client_id=client_id,
-            date_heure_ticket=ticket_interprete_2.date_heure_ticket,  # date du 2 eme ticket
-            enseigne_id=1,
-            montant_total_ticket=35.55,
-            lignes=[
-                TicketLigneResponse(
-                    ticket_ligne_id=1,  # ignoré
-                    libelle_produit="*100G NENTOS FESH H",
-                    quantite=4,
-                    categorie_produit_id=2,
-                    nom_categorie_produit="Fruits & légumes",
-                    prix_unitaire=3.54,
-                    montant_total_ligne=14.16,
-                ),
-                TicketLigneResponse(
-                    ticket_ligne_id=2,  # ignoré
-                    libelle_produit="*606G SORB CIT MX",
-                    quantite=1,
-                    categorie_produit_id=3,
-                    nom_categorie_produit="Viandes & poissons",
-                    prix_unitaire=None,
-                    montant_total_ligne=2.29,
-                ),
-                TicketLigneResponse(
-                    ticket_ligne_id=3,  # ignoré
-                    libelle_produit="*650G BAC POMME CHF",
-                    quantite=2,
-                    categorie_produit_id=3,
-                    nom_categorie_produit="Viandes & poissons",
-                    prix_unitaire=9.55,
-                    montant_total_ligne=19.1,
-                ),
-            ],
-        ),
-    )
-    assert compare_ignorant_ticket_ligne_id(
-        tickets[1],
-        TicketEnteteResponse(
-            ticket_id=tickets[1].ticket_id,
-            client_id=client_id,
-            date_heure_ticket=ticket_interprete_3.date_heure_ticket,  # date du 3 eme ticket
-            enseigne_id=1,
-            montant_total_ticket=35.55,
-            lignes=[
-                TicketLigneResponse(
-                    ticket_ligne_id=1,  # ignoré
-                    libelle_produit="*100G NENTOS FESH H",
-                    quantite=4,
-                    categorie_produit_id=2,
-                    nom_categorie_produit="Fruits & légumes",
-                    prix_unitaire=3.54,
-                    montant_total_ligne=14.16,
-                ),
-                TicketLigneResponse(
-                    ticket_ligne_id=2,  # ignoré
-                    libelle_produit="*606G SORB CIT MX",
-                    quantite=1,
-                    categorie_produit_id=3,
-                    nom_categorie_produit="Viandes & poissons",
-                    prix_unitaire=None,
-                    montant_total_ligne=2.29,
-                ),
-                TicketLigneResponse(
-                    ticket_ligne_id=3,  # ignoré
-                    libelle_produit="*650G BAC POMME CHF",
-                    quantite=2,
-                    categorie_produit_id=3,
-                    nom_categorie_produit="Viandes & poissons",
-                    prix_unitaire=9.55,
-                    montant_total_ligne=19.1,
-                ),
-            ],
-        ),
-    )
-
-
-def test_get_tickets_avant(session, simple_ticket_interprete):
-    # on veut 3 copies différentes, pas 3 références sur le même objet
-    ticket_interprete_1 = copy.deepcopy(simple_ticket_interprete)
-
-    ticket_interprete_2 = copy.deepcopy(simple_ticket_interprete)
-    ticket_interprete_2.date_heure_ticket = (
-        ticket_interprete_1.date_heure_ticket + timedelta(days=2)
-    )  # 2 jours après
-
-    ticket_interprete_3 = copy.deepcopy(simple_ticket_interprete)
-    ticket_interprete_3.date_heure_ticket = (
-        ticket_interprete_1.date_heure_ticket + timedelta(days=4)
-    )  # 4 jours après
-
-    client_id = 30
-
-    insere_ticket(ticket_interprete_1, client_id)
-    insere_ticket(ticket_interprete_2, client_id)
-    insere_ticket(ticket_interprete_3, client_id)
-
-    tickets = TicketService.get_tickets(
-        session, client_id=client_id, date_fin=ticket_interprete_2.date_heure_ticket
-    )
-    assert len(tickets) == 2
-    assert compare_ignorant_ticket_ligne_id(
-        tickets[0],
-        TicketEnteteResponse(
-            ticket_id=tickets[0].ticket_id,
-            client_id=client_id,
-            date_heure_ticket=ticket_interprete_1.date_heure_ticket,
-            enseigne_id=1,
-            montant_total_ticket=35.55,
-            lignes=[
-                TicketLigneResponse(
-                    ticket_ligne_id=1,  # ignoré
-                    libelle_produit="*100G NENTOS FESH H",
-                    quantite=4,
-                    categorie_produit_id=2,
-                    nom_categorie_produit="Fruits & légumes",
-                    prix_unitaire=3.54,
-                    montant_total_ligne=14.16,
-                ),
-                TicketLigneResponse(
-                    ticket_ligne_id=2,  # ignoré
-                    libelle_produit="*606G SORB CIT MX",
-                    quantite=1,
-                    categorie_produit_id=3,
-                    nom_categorie_produit="Viandes & poissons",
-                    prix_unitaire=None,
-                    montant_total_ligne=2.29,
-                ),
-                TicketLigneResponse(
-                    ticket_ligne_id=3,  # ignoré
-                    libelle_produit="*650G BAC POMME CHF",
-                    quantite=2,
-                    categorie_produit_id=3,
-                    nom_categorie_produit="Viandes & poissons",
-                    prix_unitaire=9.55,
-                    montant_total_ligne=19.1,
-                ),
-            ],
-        ),
-    )
-    assert compare_ignorant_ticket_ligne_id(
-        tickets[1],
-        TicketEnteteResponse(
-            ticket_id=tickets[1].ticket_id,
-            client_id=client_id,
-            date_heure_ticket=ticket_interprete_2.date_heure_ticket,
-            enseigne_id=1,
-            montant_total_ticket=35.55,
-            lignes=[
-                TicketLigneResponse(
-                    ticket_ligne_id=1,  # ignoré
-                    libelle_produit="*100G NENTOS FESH H",
-                    quantite=4,
-                    categorie_produit_id=2,
-                    nom_categorie_produit="Fruits & légumes",
-                    prix_unitaire=3.54,
-                    montant_total_ligne=14.16,
-                ),
-                TicketLigneResponse(
-                    ticket_ligne_id=2,  # ignoré
-                    libelle_produit="*606G SORB CIT MX",
-                    quantite=1,
-                    categorie_produit_id=3,
-                    nom_categorie_produit="Viandes & poissons",
-                    prix_unitaire=None,
-                    montant_total_ligne=2.29,
-                ),
-                TicketLigneResponse(  # ignoré
-                    ticket_ligne_id=3,
-                    libelle_produit="*650G BAC POMME CHF",
-                    quantite=2,
-                    categorie_produit_id=3,
-                    nom_categorie_produit="Viandes & poissons",
-                    prix_unitaire=9.55,
-                    montant_total_ligne=19.1,
-                ),
-            ],
-        ),
-    )
-
-===== tests/database/test_create_ticket.py =====
-from decimal import Decimal
-import logging
-import pytest
-from datetime import datetime
-import pyodbc
-from app.schemas.ticket_interprete import TicketInterprete
-from app.services.ticket_service import TicketService
-from tests.database.conftest import (
-    PYODBC_CONNECTION_STRING,
-    DB_NAME,
-)
-
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-
-@pytest.fixture
-def simple_ticket_interprete():
-    return TicketInterprete.model_validate_json(
-        """{
-        "nom_enseigne": "MARKET BAISIEUX",
-        "tel_enseigne": "03 20 41 94 28",
-        "date_heure_ticket": "2025-07-03T16:47:52",
-        "montant_total_ticket": 35.55,
-        "enseigne_id": 1,
-        "lignes": [
-            {
-                "taux_tva": 7,
-                "libelle_produit": "*100G NENTOS FESH H",
-                "qte": 4,
-                "pu": 3.54,
-                "montant": 14.16,
-                "categorie_produit_id": 1
-            },
-            {
-                "taux_tva": 6,
-                "libelle_produit": "*606G SORB CIT MX",
-                "qte": 1,
-                "pu": null,
-                "montant": 2.29,
-                "categorie_produit_id": 2
-            },
-            {
-                "taux_tva": 6,
-                "libelle_produit": "*650G BAC POMME CHF",
-                "qte": 2,
-                "pu": 9.55,
-                "montant": 19.1,
-                "categorie_produit_id": 2
-            }
-        ]
-}"""
-    )
-
-
-def test_create_ticket(session, simple_ticket_interprete):
-    user_id = 42
-    ticket = TicketService.create_ticket(session, user_id, simple_ticket_interprete)
-    ticket_id = ticket.ticket_id
-    attendu = [
-        (
-            ticket_id,
-            user_id,
-            datetime(2025, 7, 3, 16, 47, 52),
-            1,
-            Decimal("35.55"),
-            "*100G NENTOS FESH H",
-            4,
-            1,
-            Decimal("3.54"),
-            Decimal("14.16"),
-        ),
-        (
-            ticket_id,
-            user_id,
-            datetime(2025, 7, 3, 16, 47, 52),
-            1,
-            Decimal("35.55"),
-            "*606G SORB CIT MX",
-            1,
-            2,
-            None,
-            Decimal("2.29"),
-        ),
-        (
-            ticket_id,
-            user_id,
-            datetime(2025, 7, 3, 16, 47, 52),
-            1,
-            Decimal("35.55"),
-            "*650G BAC POMME CHF",
-            2,
-            2,
-            Decimal("9.55"),
-            Decimal("19.10"),
-        ),
-    ]
-    try:
-        with pyodbc.connect(PYODBC_CONNECTION_STRING) as conn:
-            cursor = conn.cursor()
-            query = f"""
-                SELECT
-                    te.ticket_id,
-                    te.client_id,
-                    te.date_heure_ticket,
-                    te.enseigne_id,
-                    te.montant_total_ticket,
-                    tl.libelle_produit,
-                    tl.quantite,
-                    tl.categorie_produit_id,
-                    tl.prix_unitaire,
-                    tl.montant_total_ligne
-                FROM [{DB_NAME}].[achats].[TicketEntetes] AS te
-                INNER JOIN [{DB_NAME}].[achats].[TicketLignes] AS tl
-                    ON te.ticket_id = tl.ticket_id
-                WHERE te.ticket_id = {ticket_id}
-                ORDER BY te.ticket_id, tl.ticket_ligne_id
-                """
-            cursor.execute(query)
-            resultat = [tuple(row) for row in cursor.fetchall()]
-            assert list(resultat) == attendu
-    except AssertionError:
-        raise
-    except Exception as e:
-        logger.critical(e)
-        raise
-
-===== tests/database/__init__.py =====
-
-===== tests/database/pyodbc_tickets_utils.py =====
-import logging
-import pyodbc
-
-from app.schemas.ticket_interprete import TicketInterprete
-from tests.database.conftest import PYODBC_CONNECTION_STRING, DB_NAME
-
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-
-def insere_ticket(ticket: TicketInterprete, client_id: int) -> bool:
-    try:
-        with pyodbc.connect(PYODBC_CONNECTION_STRING) as conn:
-            cursor = conn.cursor()
-            cursor.execute(
-                f"""
-                INSERT INTO [{DB_NAME}].[achats].[TicketEntetes] (client_id, date_heure_ticket, enseigne_id, montant_total_ticket)
-                OUTPUT INSERTED.ticket_id
-                VALUES (?, ?, ?, ?)
-            """,
-                (
-                    client_id,
-                    ticket.date_heure_ticket,
-                    ticket.enseigne_id,
-                    ticket.montant_total_ticket,
-                ),
-            )
-            # Récupérer le ticket_id généré
-            ticket_id = cursor.fetchone()[0]
-
-            # Insérer les lignes
-            for ligne in ticket.lignes:
-                cursor.execute(
-                    f"""
-                    INSERT INTO [{DB_NAME}].[achats].[TicketLignes] (
-                        ticket_id, libelle_produit, quantite, categorie_produit_id,
-                        prix_unitaire, montant_total_ligne
-                    )
-                    VALUES (?, ?, ?, ?, ?, ?)
-                """,
-                    (
-                        ticket_id,
-                        ligne.libelle_produit,
-                        ligne.qte,
-                        ligne.categorie_produit_id,
-                        ligne.pu,
-                        ligne.montant,
-                    ),
-                )
-            conn.commit()
-            return True
-    except Exception as e:
-        logger.critical(e)
-        return False
-
-===== tests/database/conftest.py =====
-from dotenv import load_dotenv
-
-load_dotenv()  # exceptionnel pour charger .env avant toutes autre opération
-
-import pytest  # noqa: E402
-import logging  # noqa: E402
-import os  # noqa: E402
-
-from sqlmodel import Session, create_engine  # noqa: E402
-from app.db.database import engine  # noqa: E402
-
-from app.services.enseigne_service import EnseigneService  # noqa: E402
-from tests.pyodbc_utils import (  # noqa: E402
-    cree_database_et_tables,
-    detruit_database,
-    execute_script_sql,
-    get_connection_string,
-    is_sql_server_running,
-)
-
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-DB_NAME = os.getenv("DB_NAME", "DB_TEST")
-DB_DRIVER = os.getenv("DB_DRIVER", "ODBC Driver 18 for SQL Server")
-DB_PORT = os.getenv("DB_PORT", 1433)
-TRUST_SERVER_CERTIFICATE = (
-    "yes" if os.getenv("TRUST_SERVER_CERTIFICATE", "no").lower() == "yes" else "no"
-)
-
-
-# docker run -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=Password123" -p 1433:1433 --name sql1 --hostname sql1 -d mcr.microsoft.com/mssql/server:2025-latest
-PYODBC_CONNECTION_STRING = get_connection_string(
-    DB_DRIVER,
-    os.getenv("DB_SERVER"),
-    DB_PORT,
-    os.getenv("DB_USER"),
-    os.getenv("DB_PASSWORD"),
-    trust_server_certificate=TRUST_SERVER_CERTIFICATE == "yes",
-    encrypt=False,
-)
-
-
-@pytest.fixture(scope="session", autouse=True)
-def setup_database():
-    execute_script_sql(
-        "tests/database/sql/ajoute_categories.sql", DB_NAME, PYODBC_CONNECTION_STRING
-    )
-    execute_script_sql(
-        "tests/database/sql/ajoute_enseignes.sql", DB_NAME, PYODBC_CONNECTION_STRING
-    )
-    yield
-
-
-# lit les val. d'Enseigne et les colle dans enseigne_dict au startup
-@pytest.fixture(autouse=True)
-def update_enseignes_dict():
-    import app.db.database
-
-    with Session(engine) as session:
-        app.db.database.enseignes_dict = EnseigneService.get_enseignes_dict(session)
-    yield
-
-
-@pytest.fixture(scope="session", autouse=True)
-def cree_database():
-    # Crée la base avant tout test
-    if not is_sql_server_running(PYODBC_CONNECTION_STRING):
-        logger.critical("Impossible de trouver le serveur de base de données")
-        pytest.exit(
-            "SQL Server introuvable, le container est-il démarré ?", returncode=1
+    @staticmethod
+    def get_produit_categorie_dict(session: Session) -> dict[str:int]:
+        statement = select(
+            ProduitCategorie.categorie_produit_id,
+            ProduitCategorie.nom_categorie_produit,
         )
-    if not cree_database_et_tables(os.getenv("DB_NAME"), PYODBC_CONNECTION_STRING):
-        logger.critical("Impossible de créer les tables.")
-        pytest.exit("Impossible de créer les tables.", returncode=1)
-    yield
-    detruit_database(os.getenv("DB_NAME"), PYODBC_CONNECTION_STRING)
+        results = session.exec(statement)
+        return {
+            nom_categorie_produit: categorie_produit_id
+            for categorie_produit_id, nom_categorie_produit in results
+        }
 
-
-@pytest.fixture(scope="function")
-def session(cree_database):
-    engine = create_engine(
-        f"mssql+pyodbc://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}@{os.getenv('DB_SERVER')}:{DB_PORT}/{DB_NAME}?driver={DB_DRIVER.replace(' ', '+')}&TrustServerCertificate={TRUST_SERVER_CERTIFICATE}",
-        echo=True,
-        future=True,
-    )
-    with Session(engine) as session:
-        yield session
-
-===== tests/pyodbc_utils.py =====
+===== app/services/tickets/ingestion_ticket.py =====
 import logging
-import pyodbc
-import re
-import socket
-
-
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-
-SCRIPT_CREATION_TOUTES_TABLES = "tests/database/sql/create_toutes_tables.sql"
-
-
-def get_connection_string(
-    driver: str,
-    server: str,
-    port: int,
-    username: str,
-    password: str,
-    trust_server_certificate: bool = False,
-    encrypt: bool = True,
-    connection_timeout: int = 5,
-) -> str:
-    return (
-        f"DRIVER={{{driver}}};SERVER={server},{port};UID={username};PWD={password};"
-        f"TrustServerCertificate={'yes' if trust_server_certificate else 'no'};"
-        f"Encrypt={'yes' if encrypt else 'no'};"
-        f"Connection Timeout={connection_timeout};"
-    )
-
-
-def is_sql_server_running(connection_string: str) -> bool:
-    try:
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-            host, port = (
-                re.search(r"SERVER=([^;]*)", connection_string).group(1).split(",")
-            )
-            port = int(port)
-            timeout = int(
-                re.search(r"Connection Timeout=([^;]*)", connection_string).group(1)
-            )
-            sock.settimeout(timeout)
-            sock.connect((host, port))
-            with pyodbc.connect(connection_string):
-                return True
-    except Exception as e:
-        logger.critical(f"Erreur : {e}")
-        return False
-
-
-def force_db_dans_conn_string(connection_string: str, db_name) -> str:
-    if "DATABASE=" in connection_string:
-        return re.sub(r"(DATABASE=)[^;]+", f"DATABASE={db_name}", connection_string)
-    else:
-        separator = ";" if not connection_string.endswith(";") else ""
-        return f"{connection_string}{separator}DATABASE={db_name};"
-
-
-def execute_script_sql(script_path: str, db_name: str, connection_string: str) -> bool:
-    try:
-        with pyodbc.connect(
-            force_db_dans_conn_string(connection_string, db_name)
-        ) as db_conn:
-            with open(script_path, "r", encoding="utf-8") as file:
-                db_cursor = db_conn.cursor()
-                sql_script = file.read()
-                for batch in sql_script.split("GO"):
-                    batch = batch.strip()
-                    if batch:
-                        db_cursor.execute(batch)
-                db_conn.commit()
-                return True
-    except pyodbc.Error as e:
-        logger.critical(f"Erreur : {e}")
-        return False
-
-
-def cree_database_et_tables(db_name: str, connection_string: str) -> bool:
-    try:
-        master_connection_string = force_db_dans_conn_string(
-            connection_string, "master"
-        )
-        db_existe = False
-        with pyodbc.connect(master_connection_string, autocommit=True) as conn:
-            cursor = conn.cursor()
-            cursor.execute("SELECT name FROM sys.databases WHERE name = ?", db_name)
-            if cursor.fetchone():
-                db_existe = True
-
-        if not db_existe:
-            # Connexion séparée, rien que pour CREATE DATABASE sinon ça plante avec pyodbc 18
-            # (merci copilot!!)
-            with pyodbc.connect(master_connection_string, autocommit=True) as conn:
-                cursor = conn.cursor()
-                cursor.execute(
-                    f"CREATE DATABASE [{db_name}]"
-                )  # Toujours utiliser les crochets !
-                print(f"Base {db_name} créée.")
-
-        return execute_script_sql(
-            SCRIPT_CREATION_TOUTES_TABLES, db_name, connection_string
-        )
-
-    except pyodbc.Error as e:
-        logger.critical(f"Erreur : {e}")
-        return False
-
-
-def detruit_database(db_name: str, connection_string: str) -> bool:
-    master_connection_string = force_db_dans_conn_string(connection_string, "master")
-    try:
-        with pyodbc.connect(master_connection_string, autocommit=True) as conn:
-            cursor = conn.cursor()
-            cursor.execute(f"SELECT 1 FROM sys.databases WHERE name = '{db_name}'")
-            if cursor.fetchone():
-                # Ferme les connexions actives à la base (évite les erreurs)
-                cursor.execute(
-                    f"""
-                    ALTER DATABASE {db_name} SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
-                    DROP DATABASE {db_name};
-                """
-                )
-        return True
-    except pyodbc.Error as e:
-        logger.critical(f"Erreur : {e}")
-        return False
-
-===== tests/reconnaissance_tickets/test_resolver.py =====
-import logging
-import pytest
 import os
-
+from mistralai import Mistral
+import requests
+import app.db.database
+from app.metrics import COMPTEUR_INGESTIONS_TICKET_ERREUR
 from app.schemas.ticket_interprete import TicketInterprete
+from app.services.enseigne_service import EnseigneService
 from app.services.tickets.reconnaissance_tickets.resolver import extrait_ticket_scanne
 
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-SOURCE = "tests/reconnaissance_tickets/data/source"
-TARGET = "tests/reconnaissance_tickets/data/expected"
+
+def interprete_image(base64_image: bytes) -> TicketInterprete | None:
+    try:
+        MISTRAL_KEY = os.environ.get("MISTRAL_API_KEY")
+        if MISTRAL_KEY:
+            client = Mistral(api_key=MISTRAL_KEY)
+            ocr_response = client.ocr.process(
+                model="mistral-ocr-latest",
+                document={
+                    "type": "image_url",
+                    "image_url": f"data:image/jpeg;base64,{base64_image}",
+                },
+                include_image_base64=True,
+            )
+            return extrait_ticket_scanne(ocr_response.pages[0].markdown)
+    except Exception as e:
+        logger.error(e)
 
 
-def load_test_cases():
-    testfiles = [
-        ("sample-crf-city.md", "sample-crf-city.json"),
-        ("sample-crf-market.md", "sample-crf-market.json"),
-        (
-            "sample-crf-market-plusieurs-produits.md",
-            "sample-crf-market-plusieurs-produits.json",
-        ),
-        ("autre.md", None),  # pas de JSON attendu car résultat attendu = None
-    ]
-    cases = []
-    for mdfile, jsonfile in testfiles:
-        with open(os.path.join(SOURCE, mdfile), encoding="utf-8") as f:
-            md_content = f.read()
-        ticketScanne_attendu = None
-        if jsonfile:
-            try:
-                with open(os.path.join(TARGET, jsonfile), encoding="utf-8") as f:
-                    ticketScanne_attendu = TicketInterprete.model_validate_json(
-                        f.read()
-                    )
-            except Exception as e:
-                logger.error(e)
-                pass  # on ne fait rien, ticketScanne_attendu est déjà à None
-        cases.append((md_content, ticketScanne_attendu))
-    return cases
+# retrouve l'id de l'enseigne en fonction du nom d'enseigne scanné
+# et ajoute la propriété "id_enseigne" ainsi que la valeur de l'id
+def resoud_enseigne(ticket: TicketInterprete) -> TicketInterprete | None:
+    try:
+        enseigne_id = EnseigneService.trouve_enseigne_id(
+            app.db.database.enseignes_dict, ticket.nom_enseigne, ticket.tel_enseigne
+        )
+        if enseigne_id:
+            ticket.enseigne_id = enseigne_id
+            return ticket
+        else:
+            logger.warning("Impossible de trouver une correspondance d'enseigne")
+    except Exception as e:
+        logger.error(e)
+
+# itere sur toutes les lignes du ticket et
+# ajoute la propriété "categorie_produit_id" lorsque elle est trouvée
+def categorise_produits(ticket: TicketInterprete) -> TicketInterprete | None:
+    try:
+
+        def resoud_categorie_id(produit_categorie):
+            for k in app.db.database.produit_categorie_dict:
+                if k.lower() == produit_categorie.lower():
+                    return app.db.database.produit_categorie_dict.get(k)
+            return app.db.database.produit_categorie_dict["Aucune"]
+
+        payload = {"produits": [ligne.libelle_produit for ligne in ticket.lignes]}
+        response = requests.post(
+            f"{os.environ.get('CATEGORISATION_SERVICE_URL')}/predict",
+            json=payload,
+            headers={"Content-Type": "application/json"},
+        )
+        if response.status_code == 200:
+            predictions = response.json()["predictions"]
+            pred_dico = {item["produit"]: item["categorie"] for item in predictions}
+            for ligne in ticket.lignes:
+                produit_categorie = pred_dico[ligne.libelle_produit]
+                categorie_produit_id = resoud_categorie_id(produit_categorie)
+                ligne.categorie_produit_id = categorie_produit_id
+        return ticket
+    except Exception as e:
+        logger.error(e)
 
 
-@pytest.mark.parametrize("markdown,ticketScanne_attendu", load_test_cases())
-def test_extrait_ticket_scanne(markdown, ticketScanne_attendu):
-    resultat = extrait_ticket_scanne(markdown)
-    if ticketScanne_attendu is None:
-        assert resultat is None
+# analyse une image de ticket et le stocke dans les différentes tables en l'attachant au user id
+# renvoie l'id du ticket, None en cas d'erreur
+def ingere_image(client_id: int, base64_image: bytes) -> TicketInterprete | None:
+    ticket_brut = interprete_image(base64_image)
+    if not ticket_brut:
+        COMPTEUR_INGESTIONS_TICKET_ERREUR.add(1, {"cause": "OCR impossible"})
     else:
-        assert resultat.model_dump() == ticketScanne_attendu.model_dump()
+        logger.info("ticket transformé en markdown.")
+        ticket_enrichi_intermediaire = categorise_produits(ticket_brut)
+        if not ticket_enrichi_intermediaire:
+            COMPTEUR_INGESTIONS_TICKET_ERREUR.add(
+                1, {"cause": "Categorisation produit impossible"}
+            )
+        else:
+            logger.info("produits tous catégorisés.")
+            ticket_enrichi = resoud_enseigne(ticket_enrichi_intermediaire)
+            if not ticket_enrichi:
+                COMPTEUR_INGESTIONS_TICKET_ERREUR.add(
+                    1, {"cause": "Resolution enseigne impossible"}
+                )
+            else:
+                return ticket_enrichi
+    return None  # pas utile mais joli
+
+===== app/services/tickets/reconnaissance_tickets/extraction_fuzzy.py =====
+import re
+import Levenshtein
+
+
+def normalise_espaces_pipes(s):
+    # Remplace pipes et espaces multiples par un seul espace, retire les bords
+    return re.sub(r"[\s|]+", " ", s).strip()
+
+
+def extraire_apres_pattern_flou(texte, pattern, seuil_similarite=0.85):
+    """
+    Retourne ce qui suit le pattern (suite de mots séparés par espaces/pipes, matching flou).
+    """
+    norm_texte = normalise_espaces_pipes(texte)
+    norm_pattern = normalise_espaces_pipes(pattern)
+    n = len(norm_pattern)
+    for i in range(len(norm_texte) - n + 1):
+        chunk = norm_texte[i : i + n]
+        dist = Levenshtein.distance(chunk, norm_pattern)
+        similarity = 1 - dist / max(len(chunk), len(norm_pattern))
+        if similarity >= seuil_similarite:
+            # Essaie de retrouver la position du dernier mot du pattern dans le texte d'origine
+            mots = pattern.split()
+            last_word = mots[-1]
+            # Cherche tous les emplacements possibles de last_word
+            regex = re.compile(re.escape(last_word), re.IGNORECASE)
+            for m in regex.finditer(texte):
+                # Approxime une correspondance de position
+                if m.start() >= int(i * len(texte) / len(norm_texte)) - len(last_word):
+                    return texte[m.end() :]
+            # Si échec, retourne la fin du texte
+            return texte
+    return None
+
+
+def extraire_avant_pattern_flou(texte, pattern, seuil_similarite=0.85):
+    """
+    Retourne ce qui précède le pattern (suite de mots séparés par espaces/pipes, matching flou).
+    """
+    norm_texte = normalise_espaces_pipes(texte)
+    norm_pattern = normalise_espaces_pipes(pattern)
+    n = len(norm_pattern)
+    for i in range(len(norm_texte) - n + 1):
+        chunk = norm_texte[i : i + n]
+        dist = Levenshtein.distance(chunk, norm_pattern)
+        similarity = 1 - dist / max(len(chunk), len(norm_pattern))
+        if similarity >= seuil_similarite:
+            # Essaie de retrouver la position du premier mot du pattern dans le texte d'origine
+            mots = pattern.split()
+            first_word = mots[0]
+            regex = re.compile(re.escape(first_word), re.IGNORECASE)
+            for m in regex.finditer(texte):
+                if m.start() >= int(i * len(texte) / len(norm_texte)) - 5:  # tolérance
+                    return texte[: m.start()]
+            # Si échec, coupe au même pourcentage
+            approx_idx = int(i * len(texte) / len(norm_texte))
+            return texte[:approx_idx]
+    return None
+
+===== app/services/tickets/reconnaissance_tickets/enseignes/carrefour/carrefour_market.py =====
+import re
+
+from app.schemas.ticket_interprete import TicketInterprete
+from app.services.tickets.reconnaissance_tickets.enseignes.carrefour.commun import (
+    interprete_lignes,
+    isole_lignes_tableau,
+    trouve_date_heure,
+    trouve_tel_enseigne,
+)
+
+
+
+def trouve_nom_enseigne_crf_market(texte: str) -> str | None:
+    # Recherche "#" suivi de 0 ou plusieurs espaces puis "market", insensible à la casse.
+    # recherche toute ligne non vide après "market"
+    # capture le début de la ligne jusqu'à "Tel" non inclus
+    match = re.search(
+        r"#\s*market.*?\n\s*\n*([^\n]+?)\s*Tel:", texte, re.IGNORECASE | re.DOTALL
+    )
+    if match:
+        return match.group(1).strip()
+
+
+def extrait_ticket_scanne(markdown: str) -> TicketInterprete:
+    return TicketInterprete(
+        nom_enseigne=trouve_nom_enseigne_crf_market(markdown),
+        tel_enseigne=trouve_tel_enseigne(markdown),
+        date_heure_ticket=trouve_date_heure(markdown),
+        montant_total_ticket=0.0,
+        lignes=interprete_lignes(isole_lignes_tableau(markdown)),
+    )
+
+===== app/services/tickets/reconnaissance_tickets/enseignes/carrefour/commun.py =====
+import re
+from datetime import datetime
+from typing import List
+from app.schemas.ticket_interprete import LigneTicketInterpretee
+from app.services.tickets.reconnaissance_tickets.extraction_fuzzy import (
+    extraire_apres_pattern_flou,
+    extraire_avant_pattern_flou,
+)
+
+
+def trouve_tel_enseigne(texte: str) -> str | None:
+    pattern = (
+        r"Tel:\s*"  # "Tel:" suivi d'espaces éventuels
+        r"("  # Début de la capture du numéro
+        r"[0-9]{2}"  # 2 chiffres
+        r"(?:[ .]+[0-9]{2}){4}"  # 4 groupes de séparateur(s) (espace ou point) + 2 chiffres
+        r")"  # Fin de la capture
+        r"(?:\s+|\s*\n)"  # Après le numéro: un ou plusieurs espaces OU zéro+espace puis saut de ligne
+    )
+    match = re.search(pattern, texte)
+    if match:
+        return match.group(1)
+    return None
+
+
+def trouve_date_heure(texte: str) -> datetime | None:
+    # Regex pour trouver le numéro après 'Tel' en fin de ligne
+    # un numéro est composé de 4 séries de 2 chiffres espacés par des " "
+    match = re.search(r"(\d{2}/\d{2}/\d{4} \d{2}:\d{2}:\d{2})", texte, re.MULTILINE)
+    if match:
+        date_str = match.group(1)
+        dt = datetime.strptime(date_str, "%d/%m/%Y %H:%M:%S")
+        return dt
+
+
+def isole_lignes_tableau(texte: str) -> List[str]:
+    texte_intermediaire = extraire_apres_pattern_flou(
+        texte, "TVA DESCRIPTION QTE x P.U. MONTANT TTC"
+    )
+    texte_reduit = extraire_avant_pattern_flou(
+        texte_intermediaire, "ARTICLE(S) TOTAL A PAYER"
+    )
+    if texte_reduit:
+        return texte_reduit.splitlines()
+    return []
+
+
+def interprete_lignes(texte: str) -> List[LigneTicketInterpretee]:
+    pattern = re.compile(
+        r"""
+    ^\s*\|?\s*                 # Début ligne, pipe et espaces optionnels
+    (\d*)                      # Col 1: quantité (peut être vide pour totaux)
+    \s*\|\s*                   # Séparateur pipe
+    ([^|]+?)                   # Col 2: nom produit
+    (?:                        # Groupe optionnel pour Col3
+        \s*\|\s*               # Séparateur pipe
+        ([\dxX., ]*)           # Col 3: qte x PU ou vide (ex: '4 x 3.54')
+    )?                         # <- OPTIONNEL !
+    \s*\|\s*                   # Séparateur pipe
+    (\d+[.,]\d+)\s*€?          # Col 4: prix avec ou sans le symbole euro
+    \s*\|?\s*$                 # Pipe et espaces optionnels, fin de ligne
+    """,
+        re.VERBOSE,
+    )
+    resultat = []
+    for ligne in texte:
+        m = pattern.match(ligne)
+        if not m:
+            continue  # ignore les lignes non valides
+
+        taux_tva = m[1].strip()
+        if taux_tva == "":
+            taux_tva = None
+        libelle_produit = m[2].strip()
+        if m[3]:
+            qte_par_pu = m[3].replace(",", ".").replace(" ", "").strip()
+        else:
+            qte_par_pu = None
+        montant = m[4].replace(",", ".").strip()
+
+        # Gestion de la troisème colonne optionnelle au format "q x pu"
+        if qte_par_pu:
+            if "x" in qte_par_pu.lower():
+                try:
+                    q_str, pu_str = re.split(r"x", qte_par_pu, flags=re.IGNORECASE)
+                    qte = int(q_str)
+                    pu = float(pu_str)
+                except Exception:
+                    # on ne fait rien, on se contente de ce qu'on a réussi à récupérer
+                    pass
+        else:
+            qte = 1
+            pu = None
+        resultat.append(
+            LigneTicketInterpretee(
+                taux_tva=taux_tva,
+                libelle_produit=libelle_produit,
+                qte=qte,
+                pu=pu,
+                montant=montant,
+            )
+        )
+    return resultat
+
+===== app/services/tickets/reconnaissance_tickets/enseignes/carrefour/carrefour_city.py =====
+import re
+
+from app.schemas.ticket_interprete import TicketInterprete
+from app.services.tickets.reconnaissance_tickets.enseignes.carrefour.commun import (
+    interprete_lignes,
+    isole_lignes_tableau,
+    trouve_date_heure,
+    trouve_tel_enseigne,
+)
+
+
+
+def trouve_nom_enseigne_crf_city(texte: str) -> str | None:
+    # Recherche "#" suivi de 0 ou plusieurs espaces puis "city", insensible à la casse.
+    # recherche toute ligne non vide après "city"
+    # capture le début de la ligne jusqu'à "Tel" non inclus
+    match = re.search(
+        r"#\s*city[\s\n]*(.*?)(?=\s*Tel:)", texte, re.IGNORECASE | re.DOTALL
+    )
+    if match:
+        return match.group(1).strip()
+
+
+def extrait_ticket_scanne(markdown: str) -> TicketInterprete:
+    return TicketInterprete(
+        nom_enseigne=trouve_nom_enseigne_crf_city(markdown),
+        tel_enseigne=trouve_tel_enseigne(markdown),
+        date_heure_ticket=trouve_date_heure(markdown),
+        montant_total_ticket=0.0,
+        lignes=interprete_lignes(isole_lignes_tableau(markdown)),
+    )
+
+===== app/services/tickets/reconnaissance_tickets/model_ticket.py =====
+from datetime import datetime
+from typing import Optional
+from pydantic import BaseModel
+from typing import List
+
+
+class LigneTicketInterpretee(BaseModel):
+    taux_tva: Optional[int] = None
+    libelle_produit: Optional[str] = None
+    qte: int = 1
+    categorie_produit_id: Optional[int] = None
+    pu: Optional[float] = None
+    montant: Optional[float] = None
+
+
+class TicketInterprete(BaseModel):
+    nom_enseigne: Optional[str] = None
+    enseigne_id: Optional[int] = None
+    tel_enseigne: Optional[str] = None
+    date_heure_ticket: Optional[datetime] = None
+    montant_total_ticket: Optional[float] = None
+    lignes: List[LigneTicketInterpretee] = []
+
+===== app/services/tickets/reconnaissance_tickets/resolver.py =====
+import re
+
+from app.schemas.ticket_interprete import TicketInterprete
+from app.services.tickets.reconnaissance_tickets.enseignes.carrefour.carrefour_city import (
+    extrait_ticket_scanne as crf_city_extrait_ticket_scanne,
+)
+from app.services.tickets.reconnaissance_tickets.enseignes.carrefour.carrefour_market import (
+    extrait_ticket_scanne as crf_mkt_extrait_ticket_scanne,
+)
+
+
+def extrait_ticket_scanne(markdown: str) -> TicketInterprete | None:
+    if re.search(r"^[\s\n]*#\s*city", markdown, re.IGNORECASE | re.MULTILINE):
+        return crf_city_extrait_ticket_scanne(markdown)
+    if re.search(r"^[\s\n]*#\s*market", markdown, re.IGNORECASE | re.MULTILINE):
+        return crf_mkt_extrait_ticket_scanne(markdown)
+    return None
+
+===== app/services/ticket_service.py =====
+import logging
+from sqlmodel import Session, select, func
+from app.metrics import COMPTEUR_TOTAL_INGESTIONS_TICKET
+from app.models.ticket import (
+    TicketEntete,
+    TicketEnteteCreate,
+    TicketLignes,
+    TicketLignesCreate,
+)
+from typing import List, Optional
+from datetime import datetime
+from sqlalchemy.orm import selectinload
+from app.schemas.ticket_interprete import TicketInterprete
+from app.schemas.ticket_reponse import TicketEnteteResponse, TicketLigneResponse
+from app.services.tickets.ingestion_ticket import ingere_image
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+
+class TicketService:
+    @staticmethod
+    def create_ticket(
+        session: Session,
+        client_id: int,
+        ticket_scanne: TicketInterprete,
+    ) -> TicketEntete | None:
+        try:
+            # Création de l'entête du ticket
+            ticket_entete = TicketEnteteCreate(
+                client_id=client_id,
+                enseigne_id=ticket_scanne.enseigne_id,
+                date_heure_ticket=ticket_scanne.date_heure_ticket,
+                montant_total_ticket=ticket_scanne.montant_total_ticket,
+            )
+            db_ticket = TicketEntete.model_validate(ticket_entete)
+            session.add(db_ticket)
+            session.commit()
+            session.refresh(db_ticket)
+
+            db_lignes = []
+            for ligne in ticket_scanne.lignes:
+                ligne_create = TicketLignesCreate(
+                    ticket_id=db_ticket.ticket_id,
+                    libelle_produit=ligne.libelle_produit,
+                    quantite=ligne.qte,
+                    categorie_produit_id=ligne.categorie_produit_id,
+                    prix_unitaire=ligne.pu,
+                    montant_total_ligne=ligne.montant,
+                )
+                db_ligne_db = TicketLignes.model_validate(ligne_create)
+                session.add(db_ligne_db)
+                db_lignes.append(db_ligne_db)
+            session.commit()
+
+            for ligne in db_lignes:
+                session.refresh(ligne)
+
+            return db_ticket
+        except Exception as e:
+            logger.error(e)
+        return None
+
+    @staticmethod
+    def get_tickets(
+        session: Session,
+        client_id: int,
+        date_debut: Optional[datetime] = None,
+        date_fin: Optional[datetime] = None,
+    ) -> List[TicketEnteteResponse]:
+        # Filtre obligatoire sur client_id
+        statement = select(TicketEntete).where(TicketEntete.client_id == client_id)
+        if date_debut is not None:
+            statement = statement.where(TicketEntete.date_heure_ticket >= date_debut)
+        if date_fin is not None:
+            statement = statement.where(TicketEntete.date_heure_ticket <= date_fin)
+
+        tickets = session.exec(statement).all()
+        results = []
+
+        for ticket in tickets:
+            lignes_statement = (
+                select(TicketLignes)
+                .options(selectinload(TicketLignes.categorie))
+                .where(TicketLignes.ticket_id == ticket.ticket_id)
+            )
+            lignes = session.exec(lignes_statement).all()
+            ticket_response = TicketEnteteResponse(
+                ticket_id=ticket.ticket_id,
+                client_id=ticket.client_id,
+                date_heure_ticket=ticket.date_heure_ticket.isoformat(),
+                enseigne_id=ticket.enseigne_id,
+                montant_total_ticket=ticket.montant_total_ticket,
+                lignes=[
+                    TicketLigneResponse(
+                        ticket_ligne_id=getattr(ligne, "ticket_ligne_id", None),
+                        libelle_produit=ligne.libelle_produit,
+                        quantite=ligne.quantite,
+                        categorie_produit_id=ligne.categorie_produit_id,
+                        nom_categorie_produit=ligne.nom_categorie_produit,
+                        prix_unitaire=ligne.prix_unitaire,
+                        montant_total_ligne=ligne.montant_total_ligne,
+                    )
+                    for ligne in lignes
+                ],
+            )
+            results.append(ticket_response)
+        return results
+
+    @staticmethod
+    def get_montant_total_par_categorie(
+        session: Session,
+        client_id: int,
+        date_debut: Optional[datetime] = None,
+        date_fin: Optional[datetime] = None,
+        categorie_id: Optional[int] = None,
+    ) -> float:
+        # On sélectionne les entêtes de ticket du client sur la période
+        ticket_stmt = select(TicketEntete.ticket_id).where(
+            TicketEntete.client_id == client_id
+        )
+        if date_debut is not None:
+            ticket_stmt = ticket_stmt.where(
+                TicketEntete.date_heure_ticket >= date_debut
+            )
+        if date_fin is not None:
+            ticket_stmt = ticket_stmt.where(TicketEntete.date_heure_ticket <= date_fin)
+        ticket_ids = ticket_ids = [row for row in session.exec(ticket_stmt).all()]
+        if not ticket_ids:
+            return 0.0
+
+        # On filtre les lignes de ticket correspondant aux tickets trouvés
+        ligne_stmt = select(func.sum(TicketLignes.montant_total_ligne))
+        ligne_stmt = ligne_stmt.where(TicketLignes.ticket_id.in_(ticket_ids))
+        if categorie_id is not None:
+            ligne_stmt = ligne_stmt.where(
+                TicketLignes.categorie_produit_id == categorie_id
+            )
+
+        montant_total = session.exec(ligne_stmt).one()
+        return montant_total or 0.0
+
+    @staticmethod
+    def ingere_image(
+        session: Session, client_id: int, base64_image: bytes
+    ) -> TicketEntete | None:
+        ticket_interprete = ingere_image(client_id, base64_image)
+        if ticket_interprete:
+            COMPTEUR_TOTAL_INGESTIONS_TICKET.add(1, {"status": "Succes"})
+            return TicketService.create_ticket(session, client_id, ticket_interprete)
+        COMPTEUR_TOTAL_INGESTIONS_TICKET.add(1, {"status": "Echec"})
+        return None
+
+===== app/services/__init__.py =====
+
+===== app/services/enseigne_service.py =====
+import Levenshtein
+from sqlmodel import Session, select
+from fastapi import HTTPException
+
+from app.models.enseigne import Enseigne, EnseigneCreate, EnseigneUpdate
+
+
+class EnseigneService:
+    @staticmethod
+    def get_all_enseignes(session: Session):
+        return session.exec(select(Enseigne)).all()
+
+    @staticmethod
+    def get_enseigne_by_id(session: Session, enseigne_id: int):
+        enseigne = session.get(Enseigne, enseigne_id)
+        if not enseigne:
+            raise HTTPException(status_code=404, detail="Enseigne non trouvée")
+        return enseigne
+
+    @staticmethod
+    def create_enseigne(session: Session, enseigne_create: EnseigneCreate):
+        raise NotImplementedError("Cette méthode n'est pas encore implémentée.")
+
+    @staticmethod
+    def update_enseigne(
+        session: Session, enseigne_id: int, enseigne_update: EnseigneUpdate
+    ):
+        raise NotImplementedError("Cette méthode n'est pas encore implémentée.")
+
+    @staticmethod
+    def delete_enseigne(session: Session, enseigne_id: int):
+        raise NotImplementedError("Cette méthode n'est pas encore implémentée.")
+
+    @staticmethod
+    def get_enseignes_dict(session: Session) -> dict[int, tuple[str, str]]:
+        statement = select(
+            Enseigne.enseigne_id,
+            Enseigne.enseigne_nom_ticket,
+            Enseigne.enseigne_num_tel_ticket,
+        )
+        results = session.exec(statement)
+        return {
+            enseigne_id: (enseigne_nom_ticket, enseigne_num_tel_ticket)
+            for enseigne_id, enseigne_nom_ticket, enseigne_num_tel_ticket in results
+        }
+
+    @staticmethod
+    def trouve_enseigne_id(
+        enseignes: dict[int, tuple[str, str]],
+        nom_enseigne_ticket: str,
+        num_tel_enseigne_ticket: str | None = None,
+        seuil_score_global: float = 0.80,
+        poids_nom: float = 0.8,
+        poids_tel: float = 0.2,
+    ) -> int | None:
+        if not enseignes:
+            return None
+        best_score = -1
+        best_id = None
+        for k, (nom, tel) in enseignes.items():
+            score_nom = Levenshtein.ratio(nom.lower(), nom_enseigne_ticket.lower())
+            if num_tel_enseigne_ticket:
+                score_tel = Levenshtein.ratio(tel, num_tel_enseigne_ticket)
+                score = poids_nom * score_nom + poids_tel * score_tel
+            else:
+                score = score_nom
+            if score > best_score:
+                best_score = score
+                best_id = k
+        return best_id if best_score >= seuil_score_global else None
+
+===== app/services/client_service.py =====
+from sqlmodel import Session, select
+from fastapi import HTTPException
+from ..models.client import Client
+from ..schemas.client import ClientCreate, ClientUpdate
+import datetime
+
+class ClientService:
+
+    @staticmethod
+    def get_all_clients(session: Session):
+        return session.exec(select(Client)).all()
+
+    @staticmethod
+    def get_client_by_id(session: Session, client_id: int):
+        client = session.get(Client, client_id)
+        if not client:
+            raise HTTPException(status_code=404, detail="Client non trouvé")
+        return client
+
+    @staticmethod
+    def create_client(session: Session, client_create: ClientCreate):
+        client = Client.from_orm(client_create)
+        session.add(client)
+        session.commit()
+        session.refresh(client)
+        return client
+
+    @staticmethod
+    def update_client(session: Session, client_id: int, client_update: ClientUpdate):
+        db_client = session.get(Client, client_id)
+        if not db_client:
+            raise HTTPException(status_code=404, detail="Client non trouvé")
+
+        update_data = client_update.dict(exclude_unset=True)
+        if not update_data:
+            raise HTTPException(status_code=400, detail="Aucune donnée à mettre à jour")
+
+
+        for key, value in update_data.items():
+            setattr(db_client, key, value)
+
+        db_client.date_derniere_modification = datetime.datetime.utcnow()
+
+        session.add(db_client)
+        session.commit()
+        session.refresh(db_client)
+        return db_client
+
+    @staticmethod
+    def delete_client(session: Session, client_id: int):
+        client = session.get(Client, client_id)
+        if not client:
+            raise HTTPException(status_code=404, detail="Client non trouvé")
+
+        session.delete(client)
+        session.commit()
+        return {"message": "Client supprimé avec succès"}
+
+===== app/config.py =====
+import os
+
+
+def get_app_insights_conn_string() -> str:
+    return os.environ["APP_INSIGHT_CONNECTION_STRING"]
+
+
+def get_db_user() -> str:
+    return os.environ["DB_USER"]
+
+
+def get_db_password() -> str:
+    return os.environ["DB_PASSWORD"]
+
+
+def get_db_server() -> str:
+    return os.environ["DB_SERVER"]
+
+
+def get_db_name() -> str:
+    return os.environ["DB_NAME"]
+
+
+def get_db_port() -> int:
+    return int(os.environ.get("DB_PORT", "1433"))
+
+
+def get_db_driver() -> str:
+    return os.environ.get("DB_DRIVER", "ODBC Driver 18 for SQL Server")
+
+
+def get_trust_server_certificate() -> str:
+    return (
+        "yes"
+        if os.environ.get("TRUST_SERVER_CERTIFICATE", "no").lower() == "yes"
+        else "no"
+    )
+
+===== app/models/produit_categorie.py =====
+from typing import Optional
+from sqlmodel import Field, SQLModel
+
+
+class ProduitCategorie(SQLModel, table=True):
+    categorie_produit_id: Optional[int] = Field(default=None, primary_key=True)
+    nom_categorie_produit: str
+
+    __tablename__ = "ProduitCategories"
+    __table_args__ = {"schema": "achats"}
+
+ProduitCategorie.model_rebuild()    
+
+===== app/models/__init__.py =====
+
+===== app/models/enseigne.py =====
+from typing import Optional
+from sqlmodel import SQLModel, Field
+
+
+class EnseigneBase(SQLModel):
+    enseigne_nom: str
+    enseigne_adresse: str
+    categorie_enseigne: str
+    enseigne_surface_m2: int
+    enseigne_num_tel_ticket: str
+    enseigne_nom_ticket: str
+
+
+class Enseigne(EnseigneBase, table=True):
+    enseigne_id: Optional[int] = Field(default=None, primary_key=True)
+
+    __tablename__ = "Enseignes"
+    __table_args__ = {"schema": "achats"}
+
+
+class EnseigneCreate(EnseigneBase):
+    pass
+
+
+class EnseigneUpdate(SQLModel):
+    enseigne_nom: Optional[str] = None
+    enseigne_adresse: Optional[str] = None
+    enseigne_num_tel_ticket: Optional[str] = None
+    categorie_enseigne: Optional[str] = None
+    enseigne_nom_ticket: Optional[str] = None
+
+===== app/models/ticket.py =====
+from typing import List, Optional
+from sqlmodel import Relationship, SQLModel, Field, Session, select
+from datetime import datetime
+from app.models.produit_categorie import ProduitCategorie
+from app.models.enseigne import Enseigne
+
+
+class TicketEnteteBase(SQLModel):
+    client_id: int
+    date_heure_ticket: datetime
+    enseigne_id: int
+    montant_total_ticket: float
+
+
+class TicketEntete(TicketEnteteBase, table=True):
+    ticket_id: Optional[int] = Field(default=None, primary_key=True)
+    lignes: List["TicketLignes"] = Relationship(back_populates="ticket")
+    enseigne_id: int = Field(foreign_key="achats.Enseignes.enseigne_id")
+    enseigne: Optional["Enseigne"] = Relationship(
+        sa_relationship_kwargs={"lazy": "joined"}
+    )
+
+    __tablename__ = "TicketEntetes"
+    __table_args__ = {"schema": "achats"}
+
+    @property
+    def enseigne_nom(self) -> Optional[str]:
+        if self.enseigne is not None:
+            return self.enseigne.enseigne_nom
+        return None
+
+
+class TicketEnteteCreate(TicketEnteteBase):
+    pass
+
+
+class TicketEnteteUpdate(TicketEnteteBase):
+    pass
+    """
+    Cette classe ne doit jamais être utilisée : les ticket ne sont jamais modifiés.
+    """
+
+    def __init__(self, *args, **kwargs):
+        raise RuntimeError(
+            "TicketEnteteUpdate ne doit jamais être instanciée (entêtes non modifiables)"
+        )
+
+
+class TicketLignesBase(SQLModel):
+    ticket_id: int
+    libelle_produit: str
+    quantite: int = 1
+    categorie_produit_id: int
+    prix_unitaire: Optional[float] = None
+    montant_total_ligne: float
+
+
+class TicketLignes(TicketLignesBase, table=True):
+    ticket_ligne_id: Optional[int] = Field(default=None, primary_key=True)
+    ticket_id: int = Field(foreign_key="achats.TicketEntetes.ticket_id")
+    categorie_produit_id: int = Field(
+        default=None, foreign_key="achats.ProduitCategories.categorie_produit_id"
+    )
+    ticket: Optional["TicketEntete"] = Relationship(back_populates="lignes")
+    categorie: Optional["ProduitCategorie"] = Relationship(
+        sa_relationship_kwargs={"lazy": "joined"}
+    )
+    __tablename__ = "TicketLignes"
+    __table_args__ = {"schema": "achats"}
+
+    @property
+    def nom_categorie_produit(self) -> Optional[str]:
+        if self.categorie is not None:
+            return self.categorie.nom_categorie_produit
+        return None
+
+
+class TicketLignesCreate(TicketLignesBase):
+    pass
+
+
+class TicketLignesUpdate(TicketLignesBase):
+    pass
+
+    """
+    Cette classe ne doit jamais être utilisée : les lignes de ticket ne sont jamais modifiés.
+    """
+
+    def __init__(self, *args, **kwargs):
+        raise RuntimeError(
+            "TicketLignesUpdate ne doit jamais être instanciée (lignes non modifiables)"
+        )
+
+
+TicketLignes.model_rebuild()
+
+===== app/models/client.py =====
+from sqlmodel import SQLModel, Field
+from typing import Optional
+import datetime
+
+class Client(SQLModel, table=True):
+    client_id: Optional[int] = Field(default=None, primary_key=True)
+    nom_client: str = Field(max_length=100)
+    prenom_client: str = Field(max_length=100)
+    email_client: Optional[str] = Field(default=None, max_length=100, unique=True)
+    adresse_client: Optional[str] = Field(default=None, max_length=100, unique=True)
+    budget_client: float = Field(default=0.0)
+    date_creation: datetime.datetime = Field(default_factory=datetime.datetime.utcnow)
+    date_modification: datetime.datetime = Field(default_factory=datetime.datetime.utcnow)
+
+===== app/main.py =====
+from contextlib import asynccontextmanager
+from dotenv import load_dotenv
+from fastapi import FastAPI
+from sqlmodel import Session
+from app.routers import ticket
+from app.services.enseigne_service import EnseigneService
+from app.db.database import engine
+import app.db.database as db
+from app.services.produit_categorie_service import ProduitCategorieService
+
+load_dotenv(dotenv_path=".env", override=False)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    with Session(engine) as session:
+        db.enseignes_dict = EnseigneService.get_enseignes_dict(session)
+        db.produit_categorie_dict = ProduitCategorieService.get_produit_categorie_dict(
+            session
+        )
+    yield
+
+
+app = FastAPI(lifespan=lifespan)
+app.include_router(ticket.router, tags=["Tickets"])
+
+===== app/metrics.py =====
+from opentelemetry import metrics
+from opentelemetry.sdk.metrics import MeterProvider
+from azure.monitor.opentelemetry.exporter import AzureMonitorMetricExporter
+from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
+
+from app.config import get_app_insights_conn_string
+
+exporter = AzureMonitorMetricExporter.from_connection_string(
+    get_app_insights_conn_string()
+)
+reader = PeriodicExportingMetricReader(
+    exporter, export_interval_millis=5 * 60 * 1000
+)  # on échantillone toutes les 5 minutes
+
+provider = MeterProvider(metric_readers=[reader])
+metrics.set_meter_provider(provider)
+
+meter = metrics.get_meter(__name__)
+
+COMPTEUR_TOTAL_INGESTIONS_TICKET = meter.create_counter(
+    name="ingestions.tickets.total",
+    description="Nombre total d'ingestions de ticket",
+    unit="1",
+)
+COMPTEUR_INGESTIONS_TICKET_ERREUR = meter.create_counter(
+    name="ingestions.tickets.erreurs",
+    description="Nombre d'erreur d'ingestion de tickets",
+    unit="1",
+)
+
+===== app/db/database.py =====
+import logging
+from sqlmodel import create_engine, Session
+
+from app.config import (
+    get_db_driver,
+    get_db_name,
+    get_db_password,
+    get_db_port,
+    get_db_server,
+    get_db_user,
+    get_trust_server_certificate,
+)
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+enseignes_dict = None
+produit_categorie_dict = None
+
+
+def construit_database_url():
+    user = get_db_user()
+    password = get_db_password()
+    server = get_db_server()
+    port = get_db_port()
+    dbname = get_db_name()
+    driver = get_db_driver()
+    trust = get_trust_server_certificate()
+    return (
+        f"mssql+pyodbc://{user}:{password}@{server}:{port}/{dbname}"
+        f"?driver={driver.replace(' ', '+')}&TrustServerCertificate={trust}"
+    )
+
+
+DATABASE_URL = construit_database_url()
+
+# Création de l'engine SQLModel
+engine = create_engine(DATABASE_URL, echo=False, future=True)
+
+
+# Dependency à utiliser dans FastAPI (ou tes services)
+def get_session():
+    with Session(engine) as session:
+        yield session
+
+===== app/schemas/ticket_reponse.py =====
+from datetime import datetime
+from typing import Optional
+from pydantic import BaseModel
+from typing import List
+
+
+class TicketLigneResponse(BaseModel):
+    ticket_ligne_id: Optional[int]
+    libelle_produit: str
+    quantite: int
+    categorie_produit_id: Optional[int]
+    nom_categorie_produit: Optional[str]
+    prix_unitaire: Optional[float]
+    montant_total_ligne: Optional[float]
+
+
+class TicketEnteteResponse(BaseModel):
+    ticket_id: int
+    client_id: int
+    date_heure_ticket: datetime
+    enseigne_id: int
+    montant_total_ticket: float
+    lignes: List[TicketLigneResponse]
+
+===== app/schemas/client.py =====
+from sqlmodel import SQLModel
+from typing import Optional
+
+# Modèle pour mise à jour 
+class ClientUpdate(SQLModel):
+    nom: Optional[str] = None
+    prenom: Optional[str] = None
+    email: Optional[str] = None
+    adresse: Optional[str] = None
+    budget: Optional[float] = None
+
+
+# Créer un client en ne specifiant que le nom, prenom et le budget
+# L'email et l'adresse sont optionnels 
+class ClientCreate(SQLModel):
+    nom: str
+    prenom: str
+    email: Optional[str] = None
+    adresse: Optional[str] = None
+    budget: float
+===== app/schemas/ticket_interprete.py =====
+from datetime import datetime
+from typing import Optional
+from pydantic import BaseModel
+from typing import List
+
+
+class LigneTicketInterpretee(BaseModel):
+    taux_tva: Optional[int] = None
+    libelle_produit: Optional[str] = None
+    qte: int = 1
+    categorie_produit_id: Optional[int] = None
+    pu: Optional[float] = None
+    montant: Optional[float] = None
+
+
+class TicketInterprete(BaseModel):
+    nom_enseigne: Optional[str] = None
+    enseigne_id: Optional[int] = None
+    tel_enseigne: Optional[str] = None
+    date_heure_ticket: Optional[datetime] = None
+    montant_total_ticket: Optional[float] = None
+    lignes: List[LigneTicketInterpretee] = []
+
+===== app/routers/clients.py =====
+from fastapi import APIRouter, Depends
+from sqlmodel import Session
+from typing import List
+from ..models.client import Client
+from ..schemas.client import ClientCreate, ClientUpdate
+from ..services.client_service import ClientService
+from ..database import get_session
+
+router = APIRouter()
+
+@router.get("/clients", response_model=List[Client])
+def read_clients(session: Session = Depends(get_session)):
+    return ClientService.get_all_clients(session)
+
+@router.get("/clients/{client_id}", response_model=Client)
+def read_client(client_id: int, session: Session = Depends(get_session)):
+    return ClientService.get_client_by_id(session, client_id)
+
+@router.post("/clients", response_model=Client)
+def create_client(client_create: ClientCreate, session: Session = Depends(get_session)):
+    return ClientService.create_client(session, client_create)
+
+@router.put("/clients/{client_id}", response_model=Client)
+def update_client(client_id: int, client_update: ClientUpdate, session: Session = Depends(get_session)):
+    return ClientService.update_client(session, client_id, client_update)
+
+@router.delete("/clients/{client_id}")
+def delete_client(client_id: int, session: Session = Depends(get_session)):
+    return ClientService.delete_client(session, client_id)
+===== app/routers/produit_categorie.py =====
+
+===== app/routers/__init__.py =====
+
+===== app/routers/enseigne.py =====
+
+===== app/routers/ticket.py =====
+import base64
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
+from sqlmodel import Session
+from typing import List, Optional
+
+from app.services.ticket_service import TicketService
+from app.db.database import get_session
+from app.schemas.ticket_interprete import TicketInterprete
+from app.schemas.ticket_reponse import TicketEnteteResponse
+
+router = APIRouter()
+
+
+# temporaire, juste pour les tests
+@router.post("/clients/{client_id}/tickets_tmp", response_model=TicketEnteteResponse)
+def create_ticket(
+    client_id: int,
+    ticket_scanne: TicketInterprete,
+    session: Session = Depends(get_session),
+):
+    ticket = TicketService.create_ticket(session, client_id, ticket_scanne)
+    if not ticket:
+        raise HTTPException(
+            status_code=400, detail="Erreur lors de la création du ticket"
+        )
+    return ticket
+
+
+@router.post("/clients/{client_id}/tickets", response_model=TicketEnteteResponse)
+async def upload_ticket_image(
+    client_id: int,
+    file: UploadFile = File(...),
+    session: Session = Depends(get_session),
+):
+    # on vérifie que le fichier est bien une image
+    if not file.content_type.startswith("image/"):
+        raise HTTPException(
+            status_code=400, detail="Le fichier doit être une image (JPEG, PNG, etc.)."
+        )
+    base64_image = base64.b64encode(await file.read()).decode("utf-8")
+    ticket = TicketService.ingere_image(session, client_id, base64_image)
+    if not ticket:
+        raise HTTPException(
+            status_code=400, detail="Erreur lors de l'ingestion de l'image du ticket"
+        )
+    return ticket
+
+
+@router.get("/clients/{client_id}/tickets", response_model=List[TicketEnteteResponse])
+def get_tickets(
+    client_id: int,
+    date_debut: Optional[str] = Query(None),
+    date_fin: Optional[str] = Query(None),
+    session: Session = Depends(get_session),
+):
+    return TicketService.get_tickets(session, client_id, date_debut, date_fin)
+
+
+@router.get("/clients/{client_id}/depenses", response_model=float)
+def get_depenses_par_categorie(
+    client_id: int,
+    date_debut: Optional[str] = Query(None),
+    date_fin: Optional[str] = Query(None),
+    categorie_id: Optional[int] = Query(None),
+    session: Session = Depends(get_session),
+):
+    return TicketService.get_montant_total_par_categorie(
+        session, client_id, date_debut, date_fin, categorie_id
+    )
 

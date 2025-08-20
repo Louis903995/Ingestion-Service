@@ -19,7 +19,11 @@ Ce document présente une démarche de test adaptée à un projet Python, avec e
   - [6. Exemples complémentaires](#6-exemples-complémentaires)
     - [Test de parsing de documents (test de service)](#test-de-parsing-de-documents-test-de-service)
     - [Test d’ingestion d’image (fonctionnelle)](#test-dingestion-dimage-fonctionnelle)
-  - [7. Références](#7-références)
+  - [7. Validation humaine avec curl](#7-validation-humaine-avec-curl)
+    - [Exemples de requêtes curl](#exemples-de-requêtes-curl)
+      - [Upload d'une image de ticket (POST)](#upload-dune-image-de-ticket-post)
+      - [Récupération de la liste des tickets (GET)](#récupération-de-la-liste-des-tickets-get)
+  - [8. Références](#8-références)
 
 ---
 
@@ -153,12 +157,40 @@ def test_ingere_image():
 
 ---
 
-## 7. Références
+## 7. Validation humaine avec curl
+
+Même avec des tests automatisés, il peut être utile de valider manuellement certains scénarios via des appels HTTP directs. `curl` permet de simuler des requêtes API depuis la ligne de commande, par exemple lors de développements locaux ou de recettes.
+<br>Les tests peuvent aussi se faire via l'intergace openApi proposée par FastAPI.
+
+### Exemples de requêtes curl
+
+#### Upload d'une image de ticket (POST)
+
+```bash
+curl -X POST http://localhost:8000/clients/123/tickets \
+  -H "accept: application/json" \
+  -H "Content-Type: multipart/form-data" \
+  -F "file=@tests/reconnaissance_tickets/data/source/carrefour_city_1.jpg"
+```
+*Envoie une image pour traitement et création d'un ticket pour le client 12.*
+
+#### Récupération de la liste des tickets (GET)
+
+```bash
+curl -X GET "http://localhost:8000/clients/12/tickets" \
+  -H "accept: application/json"
+```
+*Récupère la liste des tickets associés au client 12.*
+
+---
+
+## 8. Références
 
 - [Pytest Documentation](https://docs.pytest.org/)
 - [pytest fixtures](https://docs.pytest.org/en/stable/how-to/fixtures.html)
 - [Python logging](https://docs.python.org/3/library/logging.html)
 - [Mermaid diagrams](https://mermaid-js.github.io/mermaid/#/)
+- [Guide curl](https://curl.se/docs/manual.html)
 
 ---
 

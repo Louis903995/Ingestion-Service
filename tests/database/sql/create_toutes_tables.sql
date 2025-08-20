@@ -53,6 +53,8 @@ BEGIN
         date_heure_ticket DATETIME NOT NULL,
         enseigne_id INT NULL,
         montant_total_ticket DECIMAL(18, 2) NULL
+        CONSTRAINT FK_TicketEntetes_Enseignes
+            FOREIGN KEY (enseigne_id) REFERENCES achats.Enseignes(enseigne_id)        
     );
 END
 
