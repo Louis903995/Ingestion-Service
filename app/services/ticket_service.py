@@ -95,6 +95,7 @@ class TicketService:
                 date_heure_ticket=ticket.date_heure_ticket.isoformat(),
                 enseigne_id=ticket.enseigne_id,
                 montant_total_ticket=ticket.montant_total_ticket,
+                enseigne_nom=ticket.enseigne_nom,
                 lignes=[
                     TicketLigneResponse(
                         ticket_ligne_id=getattr(ligne, "ticket_ligne_id", None),

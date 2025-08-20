@@ -9,7 +9,7 @@ Ce document présente une démarche de test adaptée à un projet Python, avec e
 - [Guide pratique : Mettre en place une démarche de test pour un projet Python](#guide-pratique--mettre-en-place-une-démarche-de-test-pour-un-projet-python)
   - [Table des matières](#table-des-matières)
   - [1. Pourquoi tester ?](#1-pourquoi-tester-)
-  - [2. Organisation des tests](#2-organisation-des-tests)
+  - [2. Organisation des tests (Vue partielle)](#2-organisation-des-tests-vue-partielle)
   - [3. Écriture des tests unitaires et d'intégration](#3-écriture-des-tests-unitaires-et-dintégration)
     - [3.1. Structure des fichiers](#31-structure-des-fichiers)
     - [3.2. Exemple de test d'intégration base de données](#32-exemple-de-test-dintégration-base-de-données)
@@ -33,7 +33,7 @@ Les tests automatisés permettent de garantir que le code fonctionne comme atten
 
 ---
 
-## 2. Organisation des tests
+## 2. Organisation des tests (Vue partielle)
 
 L'organisation adoptée sépare les tests du code source dans un dossier `tests/` à la racine du projet. Ce dossier peut contenir des sous-dossiers par domaine fonctionnel (ex. `database/`, `reconnaissance_tickets/`).
 
@@ -160,7 +160,7 @@ def test_ingere_image():
 ## 7. Validation humaine avec curl
 
 Même avec des tests automatisés, il peut être utile de valider manuellement certains scénarios via des appels HTTP directs. `curl` permet de simuler des requêtes API depuis la ligne de commande, par exemple lors de développements locaux ou de recettes.
-<br>Les tests peuvent aussi se faire via l'intergace openApi proposée par FastAPI.
+<br>**Les tests peuvent aussi se faire via l'interface openApi proposée par FastAPI.**
 
 ### Exemples de requêtes curl
 

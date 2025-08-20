@@ -64,7 +64,7 @@ frame "**Container Apps Environment**\n\ncae-simplon-certif" as ENV {
 }
 
 ' --- Relations ---
-PREDICTION -down-> SQLDB : Connection
+INGESTION -down-> SQLDB : Connection
 INGESTION -down-> PREDICTION : REST
 FRONTEND -down-> INGESTION : REST
 INGESTION ..> VAULT : Secrets
@@ -74,6 +74,6 @@ PREDICTION ..> INSIGHTS : Logs/Metrics
 REGISTRY ..> FRONTEND : Pull
 REGISTRY ..> INGESTION : Pull
 REGISTRY ..> PREDICTION : Pull
-SQLDB -[#transparent]-> INSIGHTS
+
 }
 @enduml

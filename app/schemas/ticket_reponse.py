@@ -19,5 +19,6 @@ class TicketEnteteResponse(BaseModel):
     client_id: int
     date_heure_ticket: datetime
     enseigne_id: int
+    enseigne_nom: str
     montant_total_ticket: float
     lignes: List[TicketLigneResponse]

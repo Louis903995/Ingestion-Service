@@ -83,6 +83,7 @@ def test_get_tickets(session, simple_ticket_interprete):
             date_heure_ticket="2025-07-03T16:47:52",
             enseigne_id=1,
             montant_total_ticket=35.55,
+            enseigne_nom="Carrefour Market Baisieux",
             lignes=[
                 TicketLigneResponse(
                     ticket_ligne_id=1,  # ignoré
@@ -148,6 +149,7 @@ def test_get_tickets_a_partir_de(session, simple_ticket_interprete):
             date_heure_ticket=ticket_interprete_2.date_heure_ticket,  # date du 2 eme ticket
             enseigne_id=1,
             montant_total_ticket=35.55,
+            enseigne_nom="Carrefour Market Baisieux",
             lignes=[
                 TicketLigneResponse(
                     ticket_ligne_id=1,  # ignoré
@@ -186,6 +188,7 @@ def test_get_tickets_a_partir_de(session, simple_ticket_interprete):
             client_id=client_id,
             date_heure_ticket=ticket_interprete_3.date_heure_ticket,  # date du 3 eme ticket
             enseigne_id=1,
+            enseigne_nom="Carrefour Market Baisieux",
             montant_total_ticket=35.55,
             lignes=[
                 TicketLigneResponse(
@@ -252,6 +255,7 @@ def test_get_tickets_avant(session, simple_ticket_interprete):
             date_heure_ticket=ticket_interprete_1.date_heure_ticket,
             enseigne_id=1,
             montant_total_ticket=35.55,
+            enseigne_nom="Carrefour Market Baisieux",
             lignes=[
                 TicketLigneResponse(
                     ticket_ligne_id=1,  # ignoré
@@ -291,6 +295,7 @@ def test_get_tickets_avant(session, simple_ticket_interprete):
             date_heure_ticket=ticket_interprete_2.date_heure_ticket,
             enseigne_id=1,
             montant_total_ticket=35.55,
+            enseigne_nom='Carrefour Market Baisieux',            
             lignes=[
                 TicketLigneResponse(
                     ticket_ligne_id=1,  # ignoré
