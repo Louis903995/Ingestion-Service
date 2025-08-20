@@ -1,0 +1,79 @@
+@startuml
+title Architecture du projet
+
+' SQL Server = cylindre (database)
+' SQL Database = rectangle dans le database
+' Vault = node (représentant un coffre fort)
+' Registry = folder (dossier)
+' Insights = folder (journal/livre)
+' Container Apps Environment = frame (cadre englobant)
+
+skinparam database {
+    BackgroundColor #e5faff
+    BorderColor #0078d4
+    FontColor #0078d4
+}
+
+skinparam rectangle {
+    BackgroundColor<<frontend>> #e8f5e9
+    BorderColor<<frontend>> #43a047
+    FontColor<<frontend>> #388e3c
+
+    BackgroundColor<<api>> #fff
+    BorderColor<<api>> #1976d2
+    FontColor<<api>> #1976d2
+}
+
+skinparam node {
+    BackgroundColor<<vault>> #fffce5
+    BorderColor<<vault>> #b59700
+    FontColor<<vault>> #b59700
+}
+
+skinparam folder {
+    BackgroundColor<<registry>> #e5e5ff
+    BorderColor<<registry>> #5e5ecb
+    FontColor<<registry>> #5e5ecb
+
+    BackgroundColor<<logbook>> #e5ffee
+    BorderColor<<logbook>> #007e67
+    FontColor<<logbook>> #007e67
+}
+
+skinparam frame {
+    BackgroundColor #fafafa
+    BorderColor #43a047
+    FontColor #43a047
+    BorderThickness 2
+}
+
+frame "**Resource Group**\nRG-SIMPLON-CERTIF" as RG {
+
+database "**Azure SQL Server**\nsimplon-certif" as SQLSERVER {
+    rectangle "**SQL Database**\nsimplon-certif" as SQLDB
+}
+
+node "**Key Vault**\nkv-simplon-certif" as VAULT
+folder "**Container Registry**\ncrsimploncertif" as REGISTRY 
+folder "**Application Insights**\nappi-rg-simplon" as INSIGHTS
+
+frame "**Container Apps Environment**\n\ncae-simplon-certif" as ENV {
+    rectangle "**Container App**\nfrontend (Streamlit)" as FRONTEND 
+    rectangle "**Container App**\ningestion-service (FastAPI)" as INGESTION 
+    rectangle "**Container App**\nprediction-service (FastAPI)" as PREDICTION 
+}
+
+' --- Relations ---
+PREDICTION -down-> SQLDB : Connection
+INGESTION -down-> PREDICTION : REST
+FRONTEND -down-> INGESTION : REST
+INGESTION ..> VAULT : Secrets
+FRONTEND ..> INSIGHTS : Logs/Metrics
+INGESTION ..> INSIGHTS : Logs/Metrics
+PREDICTION ..> INSIGHTS : Logs/Metrics
+REGISTRY ..> FRONTEND : Pull
+REGISTRY ..> INGESTION : Pull
+REGISTRY ..> PREDICTION : Pull
+SQLDB -[#transparent]-> INSIGHTS
+}
+@enduml
