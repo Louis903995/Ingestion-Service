@@ -13,7 +13,7 @@ sudo add-apt-repository "$(curl https://packages.microsoft.com/config/ubuntu/$(l
 sudo apt-get update -->
 
 # Installer le pilote ODBC
-sudo apt-get install -y msodbcsql18
+
 
 
 

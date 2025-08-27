@@ -1,20 +1,17 @@
-from sqlmodel import SQLModel
+from pydantic import BaseModel
 from typing import Optional
-
-# Modèle pour mise à jour 
-class ClientUpdate(SQLModel):
-    nom: Optional[str] = None
-    prenom: Optional[str] = None
-    email: Optional[str] = None
-    adresse: Optional[str] = None
-    budget: Optional[float] = None
+from datetime import datetime
 
 
-# Créer un client en ne specifiant que le nom, prenom et le budget
-# L'email et l'adresse sont optionnels 
-class ClientCreate(SQLModel):
-    nom: str
-    prenom: str
-    email: Optional[str] = None
-    adresse: Optional[str] = None
-    budget: float
+class Client(BaseModel):
+    nom_client: str
+    prenom_client: str
+    email_client: str
+    adresse_client: Optional[str] = None
+    budget_client: float = 0
+
+
+class ClientResponse(Client):
+    client_id: int
+    date_creation: datetime
+    date_modification: datetime

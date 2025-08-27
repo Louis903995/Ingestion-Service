@@ -2,7 +2,7 @@ from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from sqlmodel import Session
-from app.routers import ticket
+from app.routers import clients, ticket
 from app.services.enseigne_service import EnseigneService
 from app.db.database import engine
 import app.db.database as db
@@ -23,3 +23,4 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 app.include_router(ticket.router, tags=["Tickets"])
+app.include_router(clients.router, tags=["Clients"])
