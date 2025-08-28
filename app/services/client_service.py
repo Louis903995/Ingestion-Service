@@ -1,18 +1,18 @@
 from typing import List
 from sqlmodel import Session, select
 from fastapi import HTTPException
-from app.schemas.client import Client as Rest_Client
+from app.schemas.client import ClientResponse
 from app.models.client import Client
 
 
 class ClientService:
 
     @staticmethod
-    def get_all_clients(session: Session) -> List[Rest_Client]:
+    def get_all_clients(session: Session) -> List[ClientResponse]:
         return session.exec(select(Client)).all()
 
     @staticmethod
-    def get_client_by_id(session: Session, client_id: int):
+    def get_client_by_id(session: Session, client_id: int) -> ClientResponse:
         client = session.get(Client, client_id)
         if not client:
             raise HTTPException(status_code=404, detail="Client non trouvé")
