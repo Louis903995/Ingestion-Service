@@ -7,6 +7,7 @@ from app.services.enseigne_service import EnseigneService
 from app.db.database import engine
 import app.db.database as db
 from app.services.produit_categorie_service import ProduitCategorieService
+from app.routers.times import data_router
 
 load_dotenv(dotenv_path=".env", override=False)
 
@@ -24,3 +25,4 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 app.include_router(ticket.router, tags=["Tickets"])
 app.include_router(clients.router, tags=["Clients"])
+app.include_router(data_router)
