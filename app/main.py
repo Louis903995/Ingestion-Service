@@ -9,7 +9,7 @@ from sqlmodel import Session
 # Application Modules
 from app.db.database import engine
 import app.db.database as db
-from app.routers import clients, ticket, numbers
+from app.routers import allures, clients, ticket
 from app.services.enseigne_service import EnseigneService
 from app.services.produit_categorie_service import ProduitCategorieService
 
@@ -33,4 +33,4 @@ app = FastAPI(lifespan=lifespan)
 # Include routers
 app.include_router(ticket.router, tags=["Tickets"])
 app.include_router(clients.router, tags=["Clients"])
-app.include_router(numbers.router)
+app.include_router(allures.router)
