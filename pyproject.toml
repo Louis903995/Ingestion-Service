@@ -1,6 +1,6 @@
 [project]
 name = "Ingestion-Service"
-version = "0.1.3"
+version = "0.1.5"
 description = "Default template for PDM package"
 authors = [
     {name = "Louis903995", email = "louis@moises.fr"},

@@ -33,4 +33,4 @@ app = FastAPI(lifespan=lifespan)
 # Include routers
 app.include_router(ticket.router, tags=["Tickets"])
 app.include_router(clients.router, tags=["Clients"])
-app.include_router(allures.router)
+app.include_router(allures.router, tags=["Allures"])
