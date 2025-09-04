@@ -53,8 +53,8 @@ BEGIN
         date_heure_ticket DATETIME NOT NULL,
         enseigne_id INT NULL,
         montant_total_ticket DECIMAL(18, 2) NULL
-        CONSTRAINT FK_TicketEntetes_Enseignes
-            FOREIGN KEY (enseigne_id) REFERENCES achats.Enseignes(enseigne_id)        
+            CONSTRAINT FK_TicketEntetes_Enseignes
+            FOREIGN KEY (enseigne_id) REFERENCES achats.Enseignes(enseigne_id)
     );
 END
 
@@ -78,5 +78,33 @@ BEGIN
             FOREIGN KEY (ticket_id) REFERENCES achats.TicketEntetes(ticket_id),
         CONSTRAINT FK_TicketLignes_ProduitCategories
             FOREIGN KEY (categorie_produit_id) REFERENCES achats.ProduitCategories(categorie_produit_id)
+    );
+END
+
+IF NOT EXISTS (
+    SELECT 1
+FROM sys.schemas
+WHERE name = 'clients'
+)
+BEGIN
+    EXEC('CREATE SCHEMA clients');
+END
+
+IF NOT EXISTS (
+    SELECT *
+FROM INFORMATION_SCHEMA.TABLES
+WHERE TABLE_SCHEMA = 'clients' AND TABLE_NAME = 'clients'
+)
+BEGIN
+    CREATE TABLE clients.clients
+    (
+        client_id INT IDENTITY(1,1) PRIMARY KEY,
+        email_client NVARCHAR(255) NOT NULL UNIQUE,
+        nom_client NVARCHAR(255) NOT NULL ,
+        prenom_client NVARCHAR(255) NOT NULL,
+        adresse_client NVARCHAR(500) NOT NULL,
+        budget_client DECIMAL(18,2) NOT NULL DEFAULT (0.00),
+        date_creation DATETIME NOT NULL DEFAULT (getdate()),
+        date_modification DATETIME NOT NULL DEFAULT (getdate())
     );
 END
