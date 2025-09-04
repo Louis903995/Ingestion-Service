@@ -47,16 +47,16 @@ PYODBC_CONNECTION_STRING = get_connection_string(
 
 @pytest.fixture(scope="session", autouse=True)
 def setup_database():
-    # execute_script_sql(
-    #     "tests/database/sql/ajoute_categories.sql",
-    #     get_db_name(),
-    #     PYODBC_CONNECTION_STRING,
-    # )
-    # execute_script_sql(
-    #     "tests/database/sql/ajoute_enseignes.sql",
-    #     get_db_name(),
-    #     PYODBC_CONNECTION_STRING,
-    # )
+    execute_script_sql(
+        "tests/database/sql/ajoute_categories.sql",
+        get_db_name(),
+        PYODBC_CONNECTION_STRING,
+    )
+    execute_script_sql(
+        "tests/database/sql/ajoute_enseignes.sql",
+        get_db_name(),
+        PYODBC_CONNECTION_STRING,
+    )
     yield
 
 
@@ -82,7 +82,7 @@ def cree_database():
         logger.critical("Impossible de créer les tables.")
         pytest.exit("Impossible de créer les tables.", returncode=1)
     yield
-    # detruit_database(get_db_name(), PYODBC_CONNECTION_STRING)
+    detruit_database(get_db_name(), PYODBC_CONNECTION_STRING)
 
 
 @pytest.fixture(scope="function")
