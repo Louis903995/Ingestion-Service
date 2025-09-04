@@ -1,11 +1,11 @@
 [project]
 name = "Ingestion-Service"
-version = "0.1.5"
+version = "0.1.6"
 description = "Default template for PDM package"
 authors = [
     {name = "Louis903995", email = "louis@moises.fr"},
 ]
-dependencies = ["pyodbc>=5.2.0", "fastapi>=0.116.1", "uvicorn>=0.35.0", "sqlalchemy>=2.0.42", "pydantic>=2.11.7", "sqlmodel>=0.0.24", "mistralai>=1.9.3", "levenshtein>=0.27.1", "python-dotenv>=1.1.1", "python-multipart>=0.0.20", "requests>=2.32.4", "opentelemetry-api>=1.36.0", "opentelemetry-sdk>=1.36.0", "azure-monitor-opentelemetry-exporter>=1.0.0b41"]
+dependencies = ["pyodbc>=5.2.0", "fastapi>=0.116.1", "uvicorn>=0.35.0", "sqlalchemy>=2.0.43", "pydantic>=2.11.7", "sqlmodel>=0.0.24", "mistralai>=1.9.3", "python-dotenv>=1.1.1", "python-multipart>=0.0.20", "requests>=2.32.4", "opentelemetry-api>=1.36.0", "opentelemetry-sdk>=1.36.0", "azure-monitor-opentelemetry-exporter>=1.0.0b41", "python-levenshtein>=0.27.1"]
 requires-python = ">=3.12"
 readme = "README.md"
 license = {text = "MIT"}
@@ -15,6 +15,16 @@ requires = ["pdm-backend"]
 build-backend = "pdm.backend"
 
 
+[dependency-groups]
+dev = [
+    "pytest>=8.4.1",
+    "ruff>=0.12.11",
+    "ruff-lsp>=0.0.62",
+]
+[tool.pytest.ini_options]
+filterwarnings = [
+    "ignore:Unrecognized server version info.*:sqlalchemy.exc.SAWarning"
+]
 [tool.pdm]
 distribution = true
 
@@ -29,11 +39,3 @@ container = "docker run --env-file .env.container.local -p 8000:8000 --name inge
 
 
 fastapi = "uvicorn app.main:app --reload"
-[dependency-groups]
-dev = [
-    "pytest>=8.4.1",
-]
-[tool.pytest.ini_options]
-filterwarnings = [
-    "ignore:Unrecognized server version info.*:sqlalchemy.exc.SAWarning"
-]

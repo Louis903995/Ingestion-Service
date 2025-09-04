@@ -1,8 +1,9 @@
 import logging
 import pyodbc
 
+from app.config import get_db_name
 from app.schemas.ticket_interprete import TicketInterprete
-from tests.database.conftest import PYODBC_CONNECTION_STRING, DB_NAME
+from tests.database.conftest import PYODBC_CONNECTION_STRING
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -14,7 +15,7 @@ def insere_ticket(ticket: TicketInterprete, client_id: int) -> bool:
             cursor = conn.cursor()
             cursor.execute(
                 f"""
-                INSERT INTO [{DB_NAME}].[achats].[TicketEntetes] (client_id, date_heure_ticket, enseigne_id, montant_total_ticket)
+                INSERT INTO [{get_db_name()}].[achats].[TicketEntetes] (client_id, date_heure_ticket, enseigne_id, montant_total_ticket)
                 OUTPUT INSERTED.ticket_id
                 VALUES (?, ?, ?, ?)
             """,
@@ -32,7 +33,7 @@ def insere_ticket(ticket: TicketInterprete, client_id: int) -> bool:
             for ligne in ticket.lignes:
                 cursor.execute(
                     f"""
-                    INSERT INTO [{DB_NAME}].[achats].[TicketLignes] (
+                    INSERT INTO [{get_db_name()}].[achats].[TicketLignes] (
                         ticket_id, libelle_produit, quantite, categorie_produit_id,
                         prix_unitaire, montant_total_ligne
                     )

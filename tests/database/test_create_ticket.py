@@ -3,12 +3,11 @@ import logging
 import pytest
 from datetime import datetime
 import pyodbc
+from app.config import get_db_name
 from app.schemas.ticket_interprete import TicketInterprete
 from app.services.ticket_service import TicketService
-from tests.database.conftest import (
-    PYODBC_CONNECTION_STRING,
-    DB_NAME,
-)
+from tests.database.conftest import PYODBC_CONNECTION_STRING
+
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -110,8 +109,8 @@ def test_create_ticket(session, simple_ticket_interprete):
                     tl.categorie_produit_id,
                     tl.prix_unitaire,
                     tl.montant_total_ligne
-                FROM [{DB_NAME}].[achats].[TicketEntetes] AS te
-                INNER JOIN [{DB_NAME}].[achats].[TicketLignes] AS tl
+                FROM [{get_db_name()}].[achats].[TicketEntetes] AS te
+                INNER JOIN [{get_db_name()}].[achats].[TicketLignes] AS tl
                     ON te.ticket_id = tl.ticket_id
                 WHERE te.ticket_id = {ticket_id}
                 ORDER BY te.ticket_id, tl.ticket_ligne_id
