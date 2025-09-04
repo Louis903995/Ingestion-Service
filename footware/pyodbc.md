@@ -19,4 +19,4 @@ sudo apt-get update -->
 
 # installation local d'une container SQL Server (pour le dev)
 docker run -e "ACCEPT_EULA=Y" -e "SA_PASSWORD=MotDePasseUltraFort123!" \
-   -p 1433:1433 --name sqlserver-dev -d mcr.microsoft.com/mssql/server:2022-latest
+   -p 1433:1433 --name sqlserver-dev -d mcr.microsoft.com/mssql/server:2025-latest
