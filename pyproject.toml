@@ -1,6 +1,6 @@
 [project]
 name = "Ingestion-Service"
-version = "0.1.5"
+version = "0.1.6"
 description = "Default template for PDM package"
 authors = [
     {name = "Louis903995", email = "louis@moises.fr"},
@@ -15,6 +15,16 @@ requires = ["pdm-backend"]
 build-backend = "pdm.backend"
 
 
+[dependency-groups]
+dev = [
+    "pytest>=8.4.1",
+    "ruff>=0.12.11",
+    "ruff-lsp>=0.0.62",
+]
+[tool.pytest.ini_options]
+filterwarnings = [
+    "ignore:Unrecognized server version info.*:sqlalchemy.exc.SAWarning"
+]
 [tool.pdm]
 distribution = true
 
@@ -29,11 +39,3 @@ container = "docker run --env-file .env.container.local -p 8000:8000 --name inge
 
 
 fastapi = "uvicorn app.main:app --reload"
-[dependency-groups]
-dev = [
-    "pytest>=8.4.1",
-]
-[tool.pytest.ini_options]
-filterwarnings = [
-    "ignore:Unrecognized server version info.*:sqlalchemy.exc.SAWarning"
-]
